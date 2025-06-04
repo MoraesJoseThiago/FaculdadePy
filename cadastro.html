@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - SecureScanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: #1a2238;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo-icon {
+            background-color: white;
+            color: #4169e1;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .container {
+            max-width: 550px;
+            width: 100%;
+            margin: 3rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .register-header h1 {
+            color: #1a2238;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .register-header p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: #4169e1;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(65, 105, 225, 0.25);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-check-input {
+            margin-right: 0.5rem;
+            width: 16px;
+            height: 16px;
+        }
+
+        .form-check-label {
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        .form-check-label a {
+            color: #4169e1;
+            text-decoration: none;
+        }
+
+        .form-check-label a:hover {
+            text-decoration: underline;
+        }
+
+        .password-requirements {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .btn {
+            display: inline-block;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 4px;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-primary {
+            color: white;
+            background-color:  #171f35;
+            border-color:  #171f35;
+        }
+
+        .btn-primary:hover {
+            background-color:  #253563;
+            border-color:  #253563;
+        }
+
+        .btn-secondary {
+            color: #6c757d;
+            background-color: #f0f0f0;
+            border-color: #f0f0f0;
+            margin-top: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e2e2;
+            border-color: #e2e2e2;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .login-link a {
+            color: #4169e1;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            display: none;
+        }
+        .alert2 {
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 5px;
+      font-weight: 500;
+      text-align: center;
+      display: none;
+    }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .container {
+                margin: 2rem auto;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="#" class="logo">
+            <div class="logo-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+            </div>
+            SecureScanner
+        </a>
+     
+    </nav>
+
+    <div class="container">
+        <div class="register-header">
+          <h1>Criar Conta</h1>
+          <p>Preencha o formulário abaixo para se registrar no SecureScanner</p>
+        </div>
+    
+        <div class="alert alert-danger" id="error-message" style="display: none;">
+          Por favor, corrija os erros no formulário antes de continuar.
+        </div>
+
+        <div class="alert2 alert-success" id="success-message">
+          Conta criada com sucesso! Verifique seu e-mail para ativar a conta.
+        </div>
+    
+        <form id="register-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="first-name">Nome</label>
+              <input type="text" class="form-control" id="first-name" placeholder="Seu nome" required>
+            </div>
+            <div class="form-group">
+              <label for="last-name">Sobrenome</label>
+              <input type="text" class="form-control" id="last-name" placeholder="Seu sobrenome" required>
+            </div>
+          </div>
+    
+          <div class="form-group">
+            <label for="email">E-mail</label>
+            <input type="email" class="form-control" id="email" placeholder="seu@email.com" required>
+          </div>
+    
+          <div class="form-group">
+            <label for="password">Senha</label>
+            <input type="password" class="form-control" id="password" placeholder="Crie uma senha forte" required>
+            <div class="password-requirements">
+              A senha deve conter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais.
+            </div>
+          </div>
+    
+          <div class="form-group">
+            <label for="confirm-password">Confirmar Senha</label>
+            <input type="password" class="form-control" id="confirm-password" placeholder="Confirme sua senha" required>
+          </div>
+    
+          <button type="submit" class="btn btn-primary">Criar Conta</button>
+          <a href="index.html">
+            <button type="button" class="btn btn-secondary" id="back-button">Voltar</button>
+          </a>
+        </form>
+    
+        <div class="login-link">
+          Já tem uma conta? <a href="index.html">Entrar</a>
+        </div>
+      </div>
+    
+      <!-- Firebase SDK (módulo) e script de cadastro -->
+      <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAnA0X3VK1jW4Gv2lkJ_Cp4g7jL1hQ36u4",
+  authDomain: "scanner-c65ce.firebaseapp.com",
+  projectId: "scanner-c65ce",
+  storageBucket: "scanner-c65ce.firebasestorage.app",
+  messagingSenderId: "731199717476",
+  appId: "1:731199717476:web:7d03c2f4acf2f06d5d5f71",
+  measurementId: "G-R6QW0YRC58"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const form = document.getElementById("register-form");
+const errorDiv = document.getElementById("error-message");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const nome = document.getElementById("first-name").value.trim();
+  const sobrenome = document.getElementById("last-name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("password").value;
+  const confirmarSenha = document.getElementById("confirm-password").value;
+
+  const senhaForte = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+
+  errorDiv.style.display = "none";
+
+  if (senha !== confirmarSenha) {
+    errorDiv.textContent = "As senhas não coincidem.";
+    errorDiv.style.display = "block";
+    return;
+  }
+
+  if (!senhaForte.test(senha)) {
+    errorDiv.textContent = "A senha não atende aos requisitos de segurança.";
+    errorDiv.style.display = "block";
+    return;
+  }
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
+    const user = userCredential.user;
+
+    await updateProfile(user, {
+      displayName: `${nome} ${sobrenome}`
+    });
+
+    // Enviar verificação de e-mail
+    await sendEmailVerification(user);
+    
+    // Salvar dados no Firestore
+    await setDoc(doc(db, "Users", user.uid), {
+      nome: nome,
+      sobrenome: sobrenome,
+      email: email,
+      uid: user.uid,
+      emailVerificado: user.emailVerified,
+      criadoEm: new Date()
+    });
+
+   
+    const successDiv = document.getElementById("success-message");
+successDiv.style.display = "block";
+
+// Espera 3 segundos antes de redirecionar para o login
+setTimeout(() => {
+  window.location.href = "index.html";
+}, 3000);
+  } catch (error) {
+    errorDiv.textContent = error.message;
+    errorDiv.style.display = "block";
+  }
+});
+
+      </script>
+      
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha - SecureScanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: #1a2238;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo-icon {
+            background-color: white;
+            color: blue;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .container {
+            max-width: 450px;
+            width: 100%;
+            margin: 5rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .reset-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .reset-header h1 {
+            color: #1a2238;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .reset-header p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: #4169e1;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(65, 105, 225, 0.25);
+        }
+
+        .btn {
+            display: inline-block;
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 4px;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-primary {
+            color: white;
+            background-color:  #171f35;
+            border-color:  #171f35;
+        }
+
+        .btn-primary:hover {
+            background-color:  #253563;
+            border-color:  #253563;
+        }
+
+        .btn-secondary {
+            color: #6c757d;
+            background-color: #f0f0f0;
+            border-color: #f0f0f0;
+            margin-top: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e2e2;
+            border-color: #e2e2e2;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .login-link a {
+            color: #4169e1;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                margin: 2rem auto;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="#" class="logo">
+            <div class="logo-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+            </div>
+            SecureScanner
+        </a>
+    
+    </nav>
+
+    <div class="container">
+        <div class="reset-header">
+            <h1>Recuperar Senha</h1>
+            <p>Informe seu e-mail para receber as instruções de recuperação</p>
+        </div>
+
+        <div class="alert alert-success" id="success-message">
+            Instruções de recuperação enviadas para seu e-mail. Verifique sua caixa de entrada.
+        </div>
+
+        <div class="alert alert-danger" id="error-message">
+            E-mail não encontrado. Verifique se o endereço está correto.
+        </div>
+
+        <form id="reset-form">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" class="form-control" id="email" placeholder="seu@email.com" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Enviar Instruções</button>
+            <button type="button" class="btn btn-secondary" id="back-button">Voltar</button>
+        </form>
+
+        <div class="login-link">
+            Lembrou sua senha? <a href="index.html">Entrar</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+        import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    
+        const firebaseConfig = {
+          apiKey: "AIzaSyAnA0X3VK1jW4Gv2lkJ_Cp4g7jL1hQ36u4",
+          authDomain: "scanner-c65ce.firebaseapp.com",
+          projectId: "scanner-c65ce",
+          storageBucket: "scanner-c65ce.firebasestorage.app",
+          messagingSenderId: "731199717476",
+          appId: "1:731199717476:web:7d03c2f4acf2f06d5d5f71",
+          measurementId: "G-R6QW0YRC58"
+        };
+    
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+    
+        document.getElementById('reset-form').addEventListener('submit', function (event) {
+          event.preventDefault();
+    
+          const emailInput = document.getElementById('email');
+          const email = emailInput.value.trim();
+          const successMsg = document.getElementById('success-message');
+          const errorMsg = document.getElementById('error-message');
+    
+          successMsg.style.display = 'none';
+          errorMsg.style.display = 'none';
+    
+          if (!email || !email.includes('@')) {
+            errorMsg.textContent = 'Digite um e-mail válido.';
+            errorMsg.style.display = 'block';
+            return;
+          }
+    
+          sendPasswordResetEmail(auth, email)
+            .then(() => {
+              successMsg.style.display = 'block';
+              emailInput.value = '';
+            })
+            .catch(error => {
+              console.error(error);
+              let msg = 'Ocorreu um erro. Tente novamente.';
+    
+              if (error.code === 'auth/user-not-found') {
+                msg = 'E-mail não encontrado. Verifique se o endereço está correto.';
+              } else if (error.code === 'auth/invalid-email') {
+                msg = 'E-mail inválido.';
+              }
+    
+              errorMsg.textContent = msg;
+              errorMsg.style.display = 'block';
+            });
+        });
+    
+        document.getElementById('back-button').addEventListener('click', function () {
+          window.location.href = 'index.html';
+        });
+      </script>
+      
+</body>
+</html>

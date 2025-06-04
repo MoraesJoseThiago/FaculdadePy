@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureScanner - Sistema Integrado de Análise de Vulnerabilidades</title>
+    <style>
+        /* Variáveis CSS para cores e espaçamento */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #475569;
+            --info: #0ea5e9;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+        }
+
+        /* Reset básico e fonte */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Estilos do corpo da página */
+        body {
+            background-color: var(--gray-100);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        /* Estilos do cabeçalho */
+        header {
+            background-color: var(--dark);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Container central para conteúdo */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Layout do conteúdo do cabeçalho */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Estilos do logo */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Ícone do logo */
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background-color: white;
+            color: blue;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Estilos de navegação */
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav a {
+            color: var(--gray-300);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: white;
+        }
+
+        nav a.active {
+            color: white;
+            position: relative;
+        }
+
+        nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #253563;
+        }
+
+        /* Conteúdo principal */
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        /* Cartões de conteúdo */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            color: var(--gray-600);
+        }
+
+        /* Grupos de formulário */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-hint {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        /* Botões */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            border: none;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background-color: #171f35;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #253563;
+        }
+
+        /* Dropdown de perfil */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: transparent;
+            border: none;
+            color: var(--gray-300);
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .dropbtn:hover {
+            color: white;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            color: black;
+            min-width: 200px;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            top: 120%;
+            right: 0;
+            z-index: 1000;
+        }
+        #dropdownContent p {
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+
+        #logoutButton {
+            margin-top: 0.5rem;
+            background-color: #e53e3e;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #logoutButton:hover {
+            background-color: #c53030;
+        }
+
+        .btn-secondary {
+            background-color: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--gray-300);
+        }
+
+        .btn-icon {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Opções de scan (velocidade, portas, etc.) */
+        .scan-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .scan-option {
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .scan-option:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .scan-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(37, 99, 235, 0.05);
+        }
+
+        .scan-option-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .scan-option-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #171f35;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+        }
+
+        .scan-option-title {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .scan-option-description {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        /* Spinner de carregamento */
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 41, 59, 0.5); /* var(--dark) com transparência */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none; /* Escondido por padrão */
+        }
+
+        .spinner {
+            border: 6px solid var(--gray-200);
+            border-top: 6px solid var(--primary);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Tabela de resultados */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .results-table th, .results-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .results-table th {
+            background-color: var(--gray-100);
+            font-weight: 600;
+        }
+
+        .results-table tr:hover {
+            background-color: var(--gray-50);
+        }
+
+        /* Badge de CVE */
+        .cve-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: #e53e3e;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Informações do OS */
+        .os-info {
+            padding: 0.5rem;
+            background-color: var(--gray-100);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: flex; /* Para alinhar os itens */
+            flex-wrap: wrap; /* Para quebrar linha em telas menores */
+            gap: 0.75rem; /* Espaçamento entre os itens */
+        }
+
+        .os-info strong {
+            color: var(--primary);
+        }
+
+        /* --- Estilos do Modal Customizado --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000; /* Acima do spinner */
+            display: none; /* Escondido por padrão */
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-content h3 {
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .modal-content p {
+            color: var(--gray-700);
+            margin-bottom: 1.5rem;
+        }
+
+        #modal-close-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        #modal-close-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Media Queries para responsividade */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            .scan-options {
+                grid-template-columns: 1fr;
+            }
+
+            .results-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="spinner-overlay" id="spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="custom-alert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <p id="modal-message"></p>
+            <button id="modal-close-btn" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                        </svg>
+                    </div>
+                    <span>SecureScanner</span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="active">Dashboard</a></li>
+                    </ul>
+                    <div class="dropdown">
+                      <button class="dropbtn" id="userDropdown">Perfil ▾</button>
+                      <div class="dropdown-content" id="dropdownContent">
+                        <p id="userName">Nome do Usuário</p>
+                        <p id="userEmail">email@exemplo.com</p>
+                        <button id="logoutButton">Sair</button>
+                      </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Configurar Análise</h2>
+                    <p class="card-description">Insira os detalhes para iniciar uma nova varredura de vulnerabilidades.</p>
+                </div>
+
+                <form id="scan-form">
+                    <div class="form-group">
+                        <label for="ip-address" class="form-label">Endereço IP ou Range</label>
+                        <input type="text" id="ip-address" class="form-input" placeholder="Ex: 192.168.1.1, 192.168.1.0/24 ou 172.16.9.201-225" required>
+                        <p class="form-hint">Insira o endereço IP único, range CIDR ou com hífen</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Velocidade do Scan</label>
+                        <div class="scan-options">
+                            <div class="scan-option selected" data-speed="T5">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">F</div>
+                                    <div class="scan-option-title">Scan Barulhento</div>
+                                </div>
+                                <p class="scan-option-description">Scan mais rápido (-T5), mas mais detectável. Ideal para redes internas.</p>
+                            </div>
+
+                            <div class="scan-option" data-speed="T3">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">N</div>
+                                    <div class="scan-option-title">Scan Normal</div>
+                                </div>
+                                <p class="scan-option-description">Velocidade balanceada (-T3). Bom equilíbrio entre velocidade e discrição.</p>
+                            </div>
+
+                            <div class="scan-option" data-speed="T1">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">L</div>
+                                    <div class="scan-option-title">Scan Lento</div>
+                                </div>
+                                <p class="scan-option-description">Scan mais lento (-T1) e discreto. Ideal para redes monitoradas.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Portas para Scan</label>
+                        <div class="scan-options">
+                            <div class="scan-option" data-ports="top_20">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">20</div>
+                                    <div class="scan-option-title">20 Portas</div>
+                                </div>
+                                <p class="scan-option-description">Scan nas 20 portas mais comuns (--top-ports 20). Muito rápido.</p>
+                            </div>
+
+                            <div class="scan-option selected" data-ports="top_100">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">100</div>
+                                    <div class="scan-option-title">100 Portas</div>
+                                </div>
+                                <p class="scan-option-description">Scan nas 100 portas mais comuns (--top-ports 100). Mais rápido.</p>
+                            </div>
+
+                            <div class="scan-option" data-ports="top_1000">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">1K</div>
+                                    <div class="scan-option-title">1000 Portas</div>
+                                </div>
+                                <p class="scan-option-description">Scan nas 1000 portas mais comuns (--top-ports 1000). Balanceado.</p>
+                            </div>
+
+                            <div class="scan-option" data-ports="all_ports">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">A</div>
+                                    <div class="scan-option-title">Todas as Portas</div>
+                                </div>
+                                <p class="scan-option-description">Scan em todas as portas (-p-). Mais completo porém mais lento.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Opções Adicionais</label>
+                        <div class="scan-options">
+                            <div class="scan-option" id="os-detection">
+                                <div class="scan-option-header">
+                                    <div class="scan-option-icon">OS</div>
+                                    <div class="scan-option-title">Detecção de OS</div>
+                                </div>
+                                <p class="scan-option-description">Tentar detectar sistema operacional (-O). Aumenta tempo de scan.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                            </svg>
+                            Iniciar Análise
+                        </button>
+                        <button type="reset" class="btn btn-secondary">Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card" id="results-card" style="display:none;">
+                <div class="card-header">
+                    <h2 class="card-title">Resultados da Análise</h2>
+                    <p class="card-description">Detalhes dos serviços e vulnerabilidades encontradas.</p>
+                </div>
+                <div id="detailed-results"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    // Função para exibir o modal customizado
+    function showCustomAlert(title, message) {
+        const modal = document.getElementById('custom-alert-modal');
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').textContent = message;
+        modal.style.display = 'flex'; // Mostra o modal
+    }
+
+    // Event listener para fechar o modal
+    document.getElementById('modal-close-btn').addEventListener('click', function() {
+        document.getElementById('custom-alert-modal').style.display = 'none'; // Esconde o modal
+    });
+
+    document.getElementById('scan-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const ip = document.getElementById('ip-address').value;
+        const speed = document.querySelector('.scan-option.selected[data-speed]').dataset.speed;
+        // Atualizado para pegar a opção de portas correta
+        const portOption = document.querySelector('.scan-option.selected[data-ports]').dataset.ports;
+        const osDetection = document.getElementById('os-detection').classList.contains('selected');
+
+        // Mostra o spinner
+        const spinner = document.getElementById('spinner');
+        if (spinner) spinner.style.display = 'flex';
+
+        try {
+            const res = await fetch('http://localhost:5000/scan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    target: ip,
+                    speed: speed,
+                    port_option: portOption,
+                    os_detection: osDetection
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.results) {
+                displayResults(data.results);
+            } else if (data.error) {
+                // Usa o modal customizado para exibir erros do backend
+                showCustomAlert('Erro na Análise', 'Erro: ' + data.error);
+            } else if (data.message) {
+                // Exibe mensagens informativas do backend (ex: nenhum host encontrado)
+                showCustomAlert('Análise Concluída', data.message);
+            }
+             else {
+                // Caso a resposta não tenha 'results' nem 'error'
+                showCustomAlert('Erro Desconhecido', 'Nenhum resultado ou erro válido recebido da API.');
+            }
+
+        } catch (error) {
+            // Usa o modal customizado para erros de rede ou processamento do frontend
+            showCustomAlert('Erro de Conexão', 'Erro ao realizar a análise. Verifique se o servidor está ativo e sua conexão. Detalhes: ' + error.message);
+            console.error(error);
+        } finally {
+            // Esconde o spinner no final, independentemente do sucesso ou falha
+            if (spinner) spinner.style.display = 'none';
+        }
+    });
+
+    function displayResults(results) {
+        // Resultados detalhados
+        const detailedResults = document.getElementById('detailed-results');
+        detailedResults.innerHTML = ''; // Limpa resultados anteriores
+
+        results.forEach(result => {
+            const resultCard = document.createElement('div');
+            resultCard.className = 'card'; // Reutiliza a classe card para estilização
+            resultCard.style.marginTop = '1rem'; // Adiciona um espaçamento superior
+
+            // Constrói a string HTML para as informações do OS
+            let osInfoHtml = `
+                <strong>IP:</strong> ${result.ip} | 
+                <strong>Status:</strong> ${result.status} | 
+                <strong>Sistema Operacional:</strong> ${result.os_details.name}
+            `;
+            // Adiciona detalhes adicionais do OS se disponíveis
+            if (result.os_details.family && result.os_details.family !== 'Não detectado') {
+                osInfoHtml += ` | <strong>Família OS:</strong> ${result.os_details.family}`;
+            }
+            if (result.os_details.generation && result.os_details.generation !== 'Não detectado') {
+                osInfoHtml += ` | <strong>Geração OS:</strong> ${result.os_details.generation}`;
+            }
+            if (result.os_details.accuracy) {
+                osInfoHtml += ` | <strong>Precisão OS:</strong> ${result.os_details.accuracy}%`;
+            }
+            if (result.os_details.cpe && result.os_details.cpe.length > 0) {
+                osInfoHtml += ` | <strong>CPE:</strong> ${result.os_details.cpe.join(', ')}`;
+            }
+
+
+            let html = `
+                <div class="os-info">
+                    ${osInfoHtml}
+                </div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Porta</th>
+                            <th>Serviço</th>
+                            <th>Produto</th>
+                            <th>Versão</th>
+                            <th>Vulnerabilidades</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            result.services.forEach(service => {
+                let cvesHtml = '';
+                if (service.cves.length > 0) {
+                    cvesHtml = service.cves.map(cve => 
+                        `<span class="cve-badge">${cve}</span>`
+                    ).join('');
+                } else {
+                    cvesHtml = 'Nenhuma encontrada';
+                }
+
+                html += `
+                    <tr>
+                        <td>${service.port}</td>
+                        <td>${service.name}</td>
+                        <td>${service.product || '-'}</td>
+                        <td>${service.version || '-'}</td>
+                        <td>${cvesHtml}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            resultCard.innerHTML = html;
+            detailedResults.appendChild(resultCard);
+        });
+
+        // Mostra o card de resultados
+        document.getElementById('results-card').style.display = 'block';
+    }
+
+    // Lógica para selecionar opções de velocidade (T5, T3, T1)
+    document.querySelectorAll('.scan-option[data-speed]').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.scan-option[data-speed]').forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+    // Lógica para selecionar opções de portas (top_20, top_100, top_1000, all_ports)
+    document.querySelectorAll('.scan-option[data-ports]').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.scan-option[data-ports]').forEach(opt => opt.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+    // Lógica para alternar a seleção da detecção de OS
+    document.getElementById('os-detection').addEventListener('click', function() {
+        this.classList.toggle('selected');
+    });
+
+    // Lógica para o botão de reset do formulário
+    document.querySelector('button[type="reset"]').addEventListener('click', function() {
+        // Remove a seleção de todas as opções
+        document.querySelectorAll('.scan-option').forEach(opt => opt.classList.remove('selected'));
+        // Re-seleciona as opções padrão
+        document.querySelector('.scan-option[data-speed="T5"]').classList.add('selected');
+        document.querySelector('.scan-option[data-ports="top_100"]').classList.add('selected'); // Mantém top_100 como padrão
+        document.getElementById('os-detection').classList.remove('selected');
+        // Esconde o card de resultados
+        document.getElementById('results-card').style.display = 'none';
+        // Limpa os resultados detalhados
+        document.getElementById('detailed-results').innerHTML = '';
+    });
+
+    // Lógica para o dropdown de perfil (se aplicável)
+    document.getElementById('userDropdown').addEventListener('click', function() {
+        const dropdownContent = document.getElementById('dropdownContent');
+        dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Fechar dropdown se clicar fora
+    window.addEventListener('click', function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            const dropdowns = document.getElementsByClassName('dropdown-content');
+            for (let i = 0; i < dropdowns.length; i++) {
+                const openDropdown = dropdowns[i];
+                if (openDropdown.style.display === 'block') {
+                    openDropdown.style.display = 'none';
+                }
+            }
+        }
+    });
+
+    // Lógica para o botão de logout (apenas um placeholder)
+    document.getElementById('logoutButton').addEventListener('click', function() {
+        showCustomAlert('Logout', 'Funcionalidade de logout não implementada.');
+        // Aqui você adicionaria a lógica real de logout (ex: redirecionar para página de login)
+    });
+
+    </script>
+
+</body>
+</html>
