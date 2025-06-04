@@ -9,3 +9,5 @@ pip install Flask Flask-Cors python-nmap
 
 ### Quando você roda python (sem o 3, porque ele já está no ambiente de Python 3), ele executa seu script com o Python 3 e consegue encontrar todas as bibliotecas que foram instaladas no passo anterior.
 python api.py
+
+Obs: Para sair, de o coamndo "deactivate"
