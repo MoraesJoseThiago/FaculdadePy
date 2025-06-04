@@ -11,3 +11,4 @@ pip install Flask Flask-Cors python-nmap
 python api.py
 
 Obs: Para sair, de o coamndo "deactivate"
+Obs: Colocar dentro de /var/www/html
