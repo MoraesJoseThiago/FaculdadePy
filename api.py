@@ -4,15 +4,22 @@ from flask_cors import CORS
 import nmap
 import re
 import shutil
-import requests # NOVO: Importar a biblioteca requests para fazer requisições HTTP
+import requests
+import time # NOVO: Importar a biblioteca time para usar time.sleep()
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Inicializa a aplicação Flask
 app = Flask(__name__)
-# Permite requisições de Cross-Origin Resource Sharing (CORS) de qualquer origem.
 CORS(app)
+
+# NOVO: Cache em memória para os detalhes das CVEs do NVD
+# Isso evita consultar a API do NVD várias vezes para a mesma CVE ID.
+cve_details_cache = {}
+# NOVO: Tempo de espera entre as requisições ao NVD (em segundos)
+# Ajuste este valor. NVD API tem um limite de 5 requisições a cada 5 segundos.
+# 1 segundo por requisição é um bom ponto de partida para não exceder o limite.
+NVD_API_DELAY = 1.0 
 
 def is_nmap_installed():
     """
@@ -32,17 +39,15 @@ def get_cve_severity_from_nvd(cve_id):
     """
     Consulta a API do NVD (National Vulnerability Database) para obter detalhes da CVE,
     incluindo sua pontuação CVSS e severidade.
-    
-    Args:
-        cve_id (str): O ID da CVE (ex: 'CVE-2021-44228').
-        
-    Returns:
-        dict: Um dicionário com a severidade ('critical', 'high', 'medium', 'low', 'unknown'),
-              pontuação CVSS, resumo e referências.
+    Usa um cache em memória para evitar requisições repetidas e aplica um delay.
     """
+    # Verifica se a CVE já está no cache
+    if cve_id in cve_details_cache:
+        logging.info(f"CVE {cve_id} encontrada no cache.")
+        return cve_details_cache[cve_id]
+
     nvd_api_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={cve_id}"
     
-    # Valores padrão em caso de falha na consulta
     default_cve_details = {
         "severity": "unknown",
         "cvss_score": None,
@@ -51,16 +56,17 @@ def get_cve_severity_from_nvd(cve_id):
     }
 
     try:
-        # Faz a requisição HTTP para a API do NVD com um timeout
-        response = requests.get(nvd_api_url, timeout=10) # Aumentado o timeout para 10 segundos
-        response.raise_for_status() # Levanta um erro para status de erro HTTP (4xx ou 5xx)
+        # APLICAR DELAY ANTES DE CADA REQUISIÇÃO AO NVD
+        time.sleep(NVD_API_DELAY)
+        
+        response = requests.get(nvd_api_url, timeout=10)
+        response.raise_for_status()
         data = response.json()
 
         if data and data.get('vulnerabilities'):
             vuln_data = data['vulnerabilities'][0]['cve']
             
             cvss_score = None
-            # Tenta encontrar a pontuação CVSS v3.1 (preferencial), depois v3.0, depois v2.0
             if 'metrics' in vuln_data:
                 if 'cvssMetricV31' in vuln_data['metrics'] and vuln_data['metrics']['cvssMetricV31']:
                     cvss_score = vuln_data['metrics']['cvssMetricV31'][0]['cvssData'].get('baseScore')
@@ -69,7 +75,6 @@ def get_cve_severity_from_nvd(cve_id):
                 elif 'cvssMetricV2' in vuln_data['metrics'] and vuln_data['metrics']['cvssMetricV2']:
                     cvss_score = vuln_data['metrics']['cvssMetricV2'][0]['cvssData'].get('baseScore')
             
-            # Pega a primeira descrição em inglês, se disponível
             description = "Descrição não disponível."
             if 'descriptions' in vuln_data:
                 for desc in vuln_data['descriptions']:
@@ -77,8 +82,7 @@ def get_cve_severity_from_nvd(cve_id):
                         description = desc['value']
                         break
             
-            # Classifica a severidade com base na pontuação CVSS
-            severity_category = "low" # Padrão para baixa se a pontuação for muito baixa ou não encontrada inicialmente
+            severity_category = "low"
             if cvss_score is not None:
                 if cvss_score >= 9.0:
                     severity_category = "critical"
@@ -89,25 +93,33 @@ def get_cve_severity_from_nvd(cve_id):
                 else:
                     severity_category = "low"
             else:
-                severity_category = "unknown" # Se não conseguiu pontuação, a severidade é desconhecida
+                severity_category = "unknown"
 
-            return {
+            # Armazena o resultado no cache antes de retornar
+            result = {
                 "severity": severity_category,
                 "cvss_score": cvss_score,
                 "summary": description,
                 "references": [ref['url'] for ref in vuln_data.get('references', []) if 'url' in ref]
             }
+            cve_details_cache[cve_id] = result
+            return result
 
     except requests.exceptions.Timeout:
-        logging.error(f"Timeout ao consultar NVD para {cve_id}.")
+        logging.error(f"Timeout ao consultar NVD para {cve_id}. Tentando novamente sem cache...")
+        # Não armazena no cache se houve timeout, para permitir nova tentativa
     except requests.exceptions.RequestException as req_err:
-        logging.error(f"Erro de requisição ao consultar NVD para {cve_id}: {req_err}")
+        logging.error(f"Erro de requisição ao consultar NVD para {cve_id}: {req_err}. Tentando novamente sem cache...")
+        # Não armazena no cache se houve erro de requisição
     except (KeyError, IndexError) as ke:
         logging.warning(f"Estrutura inesperada na resposta do NVD para {cve_id} (KeyError/IndexError): {ke}")
-        logging.debug(f"Resposta NVD para {cve_id}: {data}") # Loga a resposta para debug
+        logging.debug(f"Resposta NVD para {cve_id}: {data}")
     except Exception as e:
         logging.error(f"Erro genérico ao processar resposta do NVD para {cve_id}: {e}")
     
+    # Se ocorrer qualquer erro, retorna os detalhes padrão e armazena no cache
+    # para evitar tentativas repetidas para uma CVE que consistentemente falha.
+    cve_details_cache[cve_id] = default_cve_details
     return default_cve_details
 
 
@@ -126,7 +138,7 @@ def run_scan(target, speed, port_option, os_detection):
     logging.info("Detecção de versão de serviço (-sV) ativada.")
 
     if port_option == "top_20":
-        arguments.append("--open --top-ports 20")
+        arguments.append("--top-ports 20")
         logging.info("Varredura nas 20 portas mais comuns ativada.")
     elif port_option == "top_100":
         arguments.append("--top-ports 100")
@@ -197,12 +209,12 @@ def run_scan(target, speed, port_option, os_detection):
                 # Lista temporária de CVEs obtidas do Nmap (apenas IDs)
                 cve_ids_from_nmap_raw = extract_cves(service.get('script', {}).get('vulners', ''))
                 
-                # CORREÇÃO: Usar um set para garantir IDs de CVEs únicos ANTES de consultar o NVD
+                # Usar um set para garantir IDs de CVEs únicos ANTES de consultar o NVD
                 unique_cve_ids_for_service = list(set(cve_ids_from_nmap_raw))
 
                 # Lista para armazenar CVEs detalhadas com severidade do NVD
                 detailed_cves = []
-                for cve_id in unique_cve_ids_for_service: # Iterar sobre IDs únicos
+                for cve_id in unique_cve_ids_for_service:
                     cve_details = get_cve_severity_from_nvd(cve_id)
                     detailed_cves.append({
                         "id": cve_id,
@@ -226,7 +238,7 @@ def run_scan(target, speed, port_option, os_detection):
                     "version": service.get('version', ''),
                     "extrainfo": service.get('extrainfo', ''),
                     "cpes": service.get('cpe', []),
-                    "cves": detailed_cves # Agora contém a lista de dicionários detalhados de CVE
+                    "cves": detailed_cves
                 })
         
         host_status = nm[host].state()

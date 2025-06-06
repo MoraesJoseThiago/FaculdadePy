@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR"> <!-- Idioma alterado de volta para Português (Brasil) -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -351,7 +351,7 @@
             color: var(--gray-600);
         }
 
-        /* BARRA DE PROGESSO E TELA DE CARREGAMENTO */
+        /* PROGRESS BAR AND LOADING SCREEN */
         .progress-overlay {
             position: fixed;
             top: 0;
@@ -405,7 +405,7 @@
             font-size: 1.1rem;
         }
 
-        /* Estilos do Modal Customizado */
+        /* Custom Modal Styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -482,13 +482,13 @@
             background-color: var(--primary-dark);
         }
         
-        /* Tabs para resultados */
+        /* Tabs for results */
         .tabs {
             display: flex;
             margin-bottom: 1.5rem;
             border-bottom: 2px solid var(--gray-200);
-            overflow-x: auto; /* Permite scroll horizontal em telas pequenas */
-            white-space: nowrap; /* Impede que os botões quebrem linha */
+            overflow-x: auto; /* Allows horizontal scrolling on small screens */
+            white-space: nowrap; /* Prevents buttons from wrapping */
         }
 
         .tab-button {
@@ -501,7 +501,7 @@
             color: var(--gray-600);
             transition: color 0.3s, border-bottom-color 0.3s;
             border-bottom: 2px solid transparent;
-            flex-shrink: 0; /* Impede que os botões encolham */
+            flex-shrink: 0; /* Prevents buttons from shrinking */
         }
 
         .tab-button.active {
@@ -514,7 +514,7 @@
         }
 
         .tab-content {
-            display: none; /* Escondido por padrão */
+            display: none; /* Hidden by default */
             padding: 1rem 0;
         }
 
@@ -522,7 +522,7 @@
             display: block;
         }
 
-        /* Resumo de Vulnerabilidades */
+        /* Vulnerability Summary */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -538,7 +538,7 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--gray-700);
-            box-shadow: inset 0 0 0 1px var(--gray-300); /* Borda sutil */
+            box-shadow: inset  0 0 0 1px var(--gray-300); /* Subtle border */
         }
         .summary-card span.count {
             display: block;
@@ -546,21 +546,21 @@
             font-weight: bold;
             margin-bottom: 0.5rem;
         }
-        /* Cores para contagens de severidade */
+        /* Colors for severity counts */
         .summary-card.critical .count { color: var(--critical-color); }
         .summary-card.high .count { color: var(--high-color); }
         .summary-card.medium .count { color: var(--medium-color); }
         .summary-card.low .count { color: var(--low-color); }
         .summary-card.unknown .count { color: var(--unknown-color); }
 
-        /* Gráfico de resumo */
+        /* Summary Chart */
         #vulnerabilityChart {
             max-height: 350px;
             margin-top: 2rem;
         }
 
-        /* Lista de Vulnerabilidades Detalhadas */
-        .vulnerability-item, .recommendation-item, .asset-item { /* Estilo unificado para itens de lista */
+        /* Detailed Vulnerabilities List */
+        .vulnerability-item, .recommendation-item, .asset-item { /* Unified list item style */
             background-color: var(--gray-50);
             border: 1px solid var(--gray-200);
             border-radius: 8px;
@@ -569,7 +569,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap; /* Para responsividade */
+            flex-wrap: wrap; /* For responsiveness */
             gap: 1rem;
         }
 
@@ -604,7 +604,7 @@
         .severity-badge.low { background-color: var(--low-color); }
         .severity-badge.unknown { background-color: var(--unknown-color); }
 
-        /* Mapa de Ativos */
+        /* Asset Map */
         #asset-map-svg {
             width: 100%;
             height: 500px; /* Altura fixa para o SVG */
@@ -756,12 +756,12 @@
                 <nav>
                     <ul>
                         <li><a href="#" class="active">Dashboard</a></li>
-                        <!-- Adicione mais links se necessário -->
+                        <!-- Add more links if necessary -->
                     </ul>
                     <div class="dropdown">
                       <button class="dropbtn" id="userDropdown">Perfil ▾</button>
                       <div class="dropdown-content" id="dropdownContent">
-                        <p id="userName">Nome do Usuário</p>
+                        <p id="userName">Nome de Usuário</p>
                         <p id="userEmail">email@exemplo.com</p>
                         <button id="logoutButton">Sair</button>
                       </div>
@@ -773,7 +773,7 @@
 
     <main class="main-content">
         <div class="container">
-            <!-- Formulário de Análise -->
+            <!-- Analysis Form -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Configurar Análise</h2>
@@ -932,7 +932,6 @@
                     <h3>Mapa de Ativos</h3>
                     <p>Uma representação visual dos dispositivos detectados na rede. Passe o mouse sobre um círculo para ver detalhes.</p>
                     <svg id="asset-map-svg"></svg>
-                    <!-- Removida a Lista de Ativos conforme solicitado -->
                 </div>
 
                 <!-- Conteúdo da Aba: Recomendações -->
@@ -954,18 +953,15 @@
         "Realizando descoberta de hosts ativos...",
         "Analisando portas e serviços...",
         "Identificando sistemas operacionais...",
-        "Coletando informações de vulnerabilidades (CVEs) do NVD...", // Mensagem atualizada
+        "Coletando informações de vulnerabilidades (CVEs) do NVD...",
         "Processando resultados e gerando relatórios...",
         "Análise concluída. Preparando o dashboard!"
     ];
     let messageIndex = 0;
-    let vulnerabilityChartInstance = null; // Para o gráfico de resumo
+    let vulnerabilityChartInstance = null;
 
-    // Variável global para armazenar os resultados do scan completos (todos os hosts e suas vulnerabilidades)
     let globalScanResults = [];
-    // Variável global para armazenar APENAS as vulnerabilidades únicas para a aba de vulnerabilidades
     let globalUniqueVulnerabilities = []; 
-    // Variável global para o IP atualmente filtrado na aba de vulnerabilidades
     let currentVulnerabilityFilterIp = 'all';
 
     // --- Funções do Modal (para alertas e detalhes de CVE) ---
@@ -1034,7 +1030,7 @@
         }, 800); 
     }
 
-    // --- Lógica Principal do Scan (integração com o backend) ---
+    // --- Lógica Principal do Scan (backend integration) ---
     document.getElementById('scan-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -1140,16 +1136,15 @@
         globalUniqueVulnerabilities.forEach(vuln => severityCounts[vuln.severity]++);
 
         updateSummaryTab(severityCounts, deviceCounts);
-        // NOVO: Chama displayVulnerabilities com o filtro 'all' inicialmente
         displayVulnerabilities(globalUniqueVulnerabilities, 'all'); 
         displayAssetMap(results);
-        displayRecommendations(globalUniqueVulnerabilities); // Passa as vulnerabilidades desduplicadas
+        displayRecommendations(globalUniqueVulnerabilities);
 
         document.getElementById('results-card').style.display = 'block';
         activateTab('summary-tab');
     }
 
-    // --- Resumo (Tab 1) ---
+    // --- Summary Tab (Tab 1) ---
     function updateSummaryTab(severityCounts, deviceCounts) {
         document.getElementById('count-critical').textContent = severityCounts.critical;
         document.getElementById('count-high').textContent = severityCounts.high;
@@ -1229,14 +1224,13 @@
         return color;
     }
 
-    // --- Vulnerabilidades Detalhadas (Tab 2) ---
-    // NOVO: Adicionado currentFilterIp para filtrar a lista
+    // --- Detailed Vulnerabilities Tab (Tab 2) ---
     function displayVulnerabilities(vulnerabilities, currentFilterIp = 'all') {
         const listDiv = document.getElementById('vulnerabilities-list');
         listDiv.innerHTML = ''; 
 
         const ipNavbar = document.getElementById('vulnerabilities-ip-navbar');
-        ipNavbar.innerHTML = ''; // Limpa o navbar de IPs
+        ipNavbar.innerHTML = '';
 
         if (vulnerabilities.length === 0) {
             listDiv.innerHTML = '<p style="text-align: center; color: var(--gray-600);">Nenhuma vulnerabilidade detalhada detectada.</p>';
@@ -1249,12 +1243,10 @@
             vuln.affected_ips.forEach(ip => uniqueIps.add(ip));
         });
         const sortedIps = Array.from(uniqueIps).sort((a, b) => {
-            // Ordena IPs numericamente para uma visualização melhor
             const ipToNum = ip => ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
             return ipToNum(a) - ipToNum(b);
         });
 
-        // Botão "Todos os IPs"
         const allIpButton = document.createElement('button');
         allIpButton.textContent = 'Todos os IPs';
         allIpButton.className = `ip-button ${currentFilterIp === 'all' ? 'active' : ''}`;
@@ -1264,7 +1256,6 @@
         });
         ipNavbar.appendChild(allIpButton);
 
-        // Botões para cada IP único
         sortedIps.forEach(ip => {
             const button = document.createElement('button');
             button.textContent = ip;
@@ -1289,11 +1280,9 @@
             return;
         }
 
-        // Determine as Top 10 e o resto
         const top10Vulnerabilities = sortedVulnerabilities.slice(0, 10);
         const remainingVulnerabilities = sortedVulnerabilities.slice(10);
         
-        // Exibe as Top 10 Vulnerabilidades com detalhes
         top10Vulnerabilities.forEach(vuln => {
             const item = document.createElement('div');
             item.className = 'vulnerability-item';
@@ -1317,27 +1306,41 @@
             listDiv.appendChild(item);
         });
 
-        // Exibe o restante das vulnerabilidades em um formato mais compacto
         if (remainingVulnerabilities.length > 0) {
             const remainingDiv = document.createElement('div');
             remainingDiv.className = 'card';
             remainingDiv.style.marginTop = '1.5rem';
+            
+            // CONTEÚDO CORRIGIDO: Gerando os badges de CVE de forma limpa e organizada
+            let remainingCvesBadgesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 10px; max-height: 200px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: 4px;">';
+            remainingVulnerabilities.forEach(vuln => {
+                remainingCvesBadgesHtml += `<span class="cve-badge ${vuln.severity}">${vuln.cve_id}</span>`;
+            });
+            remainingCvesBadgesHtml += '</div>';
+
             remainingDiv.innerHTML = `
                 <div class="card-header">
                     <h4 class="card-title">Outras Vulnerabilidades Detectadas (${remainingVulnerabilities.length})</h4>
                     <p class="card-description">IDs das CVEs que não estão entre as top 10 mais relevantes.</p>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    ${remainingVulnerabilities.map(vuln => 
-                        `<span class="cve-badge ${vuln.severity}">${vuln.cve_id}</span>`
-                    ).join('')}
-                </div>
-                <button class="btn btn-secondary btn-sm" style="margin-top: 1rem;" 
-                    onclick="showModal('Todas as Outras Vulnerabilidades', '', '<div style=\\"display: flex; flex-wrap: wrap; gap: 0.5rem;\\">${remainingVulnerabilities.map(v => `<span class=\\"cve-badge ${v.severity}\\">${v.cve_id}</span>`).join('')}</div>', false)">
+                ${remainingCvesBadgesHtml}
+                <button class="btn btn-secondary btn-sm view-all-other-cves-btn" style="margin-top: 1rem;" 
+                        data-remaining-vulnerabilities='${JSON.stringify(remainingVulnerabilities)}'>
                     Ver Todas as CVEs
                 </button>
             `;
             listDiv.appendChild(remainingDiv);
+
+            // CORREÇÃO: Listener para o botão "Ver Todas as CVEs"
+            document.querySelector('.view-all-other-cves-btn').addEventListener('click', function() {
+                const remaining = JSON.parse(this.dataset.remainingVulnerabilities);
+                let allCvesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; align-items: center; max-height: 50vh; overflow-y: auto;">';
+                remaining.forEach(v => {
+                    allCvesHtml += `<span class="cve-badge ${v.severity}">${v.cve_id}</span>`;
+                });
+                allCvesHtml += '</div>';
+                showModal('Todas as Outras Vulnerabilidades', 'Aqui estão todos os IDs das CVEs restantes.', allCvesHtml, false);
+            });
         }
 
         document.querySelectorAll('.view-details-btn').forEach(button => {
@@ -1402,9 +1405,21 @@
         });
 
         const links = [];
-        if (nodes.length > 1) {
-            for (let i = 1; i < nodes.length; i++) {
-                links.push({ source: nodes[0].id, target: nodes[i].id });
+        if (nodes.length > 0) {
+            if (nodes.length > 1) {
+                let centralNode = nodes[0]; // Padrão: primeiro nó como central
+                // CORREÇÃO: Encontrar o nó com mais CVEs para ser o central, se houver vulnerabilidades
+                if (nodes.some(n => n.total_cves > 0)) { 
+                    centralNode = nodes.reduce((maxNode, currentNode) => {
+                        return (currentNode.total_cves > maxNode.total_cves) ? currentNode : maxNode;
+                    }, nodes[0]);
+                }
+                
+                nodes.forEach(n => {
+                    if (n.id !== centralNode.id) { // Conecta todos os outros nós ao nó central
+                        links.push({ source: centralNode.id, target: n.id });
+                    }
+                });
             }
         }
         
@@ -1428,7 +1443,7 @@
                 .on("end", dragended));
 
         node.append("circle")
-            .attr("r", d => 15 + d.total_cves * 2)
+            .attr("r", d => Math.min(30, 10 + d.total_cves * 0.5))
             .attr("fill", d => {
                 let highestSeverity = 'low';
                 const severityOrder = { 'critical': 5, 'high': 4, 'medium': 3, 'low': 2, 'unknown': 1 };
@@ -1490,7 +1505,7 @@
 
 
         node.append("text")
-            .attr("dy", d => 15 + d.total_cves * 2 + 10)
+            .attr("dy", d => Math.min(30, 10 + d.total_cves * 0.5) + 10)
             .text(d => d.name);
 
         simulation
@@ -1611,11 +1626,9 @@
             listDiv.appendChild(item);
         });
 
-        // CORREÇÃO: Removido o showModal do botão "Marcar como Resolvido"
         document.querySelectorAll('.mark-as-resolved-btn').forEach(button => {
             button.addEventListener('click', function() {
-                // showModal('Status da Recomendação', 'Funcionalidade "Marcar como Resolvido" não implementada no backend. Esta recomendação será apenas removida da lista nesta sessão.', '', true);
-                this.closest('.recommendation-item').remove(); // Apenas remove o item da UI
+                this.closest('.recommendation-item').remove();
             });
         });
     }
@@ -1638,8 +1651,6 @@
         if (tabId === 'asset-map-tab' && globalScanResults.length > 0) {
             setTimeout(() => displayAssetMap(globalScanResults), 50);
         } else if (tabId === 'vulnerabilities-tab' && globalUniqueVulnerabilities.length > 0) {
-            // Se for a aba de vulnerabilidades, re-renderiza para garantir o navbar de IPs
-            // e o filtro correto sejam aplicados.
             displayVulnerabilities(globalUniqueVulnerabilities, currentVulnerabilityFilterIp);
         }
     }
@@ -1672,7 +1683,6 @@
         document.getElementById('results-card').style.display = 'none';
 
         document.getElementById('vulnerabilities-list').innerHTML = ''; 
-        // NOVO: Limpar o navbar de IPs no reset
         document.getElementById('vulnerabilities-ip-navbar').innerHTML = '';
         document.getElementById('recommendations-list').innerHTML = '';
         document.getElementById('count-critical').textContent = '0';
@@ -1711,7 +1721,7 @@
     });
 
     document.getElementById('logoutButton').addEventListener('click', function() {
-        showModal('Logout', 'Funcionalidade de logout não implementada.', '', true);
+        showModal('Logout', 'Funcionalidade não implementada.', '', true);
     });
 
     </script>
