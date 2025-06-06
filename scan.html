@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR"> <!-- Idioma alterado de volta para Português (Brasil) -->
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -604,7 +604,7 @@
         .severity-badge.low { background-color: var(--low-color); }
         .severity-badge.unknown { background-color: var(--unknown-color); }
 
-        /* Asset Map */
+        /* Mapa de Ativos */
         #asset-map-svg {
             width: 100%;
             height: 500px; /* Altura fixa para o SVG */
@@ -722,7 +722,6 @@
 </head>
 <body>
 
-    <!-- Tela de Carregamento/Progresso -->
     <div class="progress-overlay" id="progress-overlay">
         <h2 class="progress-title">Análise em Andamento</h2>
         <p class="progress-message" id="progress-message">Iniciando varredura da rede...</p>
@@ -731,14 +730,13 @@
         </div>
     </div>
 
-    <!-- Modal Customizado para Mensagens/Detalhes de CVE -->
     <div id="custom-modal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-button" id="modal-close-button">&times;</button>
             <h3 id="modal-title"></h3>
             <p id="modal-message"></p>
-            <div id="modal-details-content" style="text-align: left;"></div> <!-- Conteúdo detalhado aqui -->
-            <button id="modal-ok-btn" class="btn btn-primary" style="display: none;">OK</button> <!-- Botão OK, apenas para alertas simples -->
+            <div id="modal-details-content" style="text-align: left;"></div> <!-- Detailed content here -->
+            <button id="modal-ok-btn" class="btn btn-primary" style="display: none;">OK</button> <!-- OK button, only for simple alerts -->
         </div>
     </div>
 
@@ -756,7 +754,7 @@
                 <nav>
                     <ul>
                         <li><a href="#" class="active">Dashboard</a></li>
-                        <!-- Add more links if necessary -->
+                        <!-- Adicione mais links se necessário -->
                     </ul>
                     <div class="dropdown">
                       <button class="dropbtn" id="userDropdown">Perfil ▾</button>
@@ -877,14 +875,12 @@
                 </form>
             </div>
 
-            <!-- Seção de Resultados (Com Abas - Dashboard) -->
             <div class="card" id="results-card" style="display:none;">
                 <div class="card-header">
                     <h2 class="card-title">Resultados da Análise</h2>
                     <p class="card-description">Visão geral e detalhes das vulnerabilidades e ativos.</p>
                 </div>
 
-                <!-- Abas de Navegação -->
                 <div class="tabs">
                     <button class="tab-button active" data-tab="summary-tab">Resumo</button>
                     <button class="tab-button" data-tab="vulnerabilities-tab">Vulnerabilidades</button>
@@ -892,7 +888,6 @@
                     <button class="tab-button" data-tab="recommendations-tab">Recomendações</button>
                 </div>
 
-                <!-- Conteúdo da Aba: Resumo -->
                 <div id="summary-tab" class="tab-content active">
                     <h3>Visão Geral das Vulnerabilidades</h3>
                     <div class="summary-grid">
@@ -902,9 +897,7 @@
                         <div class="summary-card low"><span id="count-low" class="count">0</span>Vulnerabilidades Baixas</div>
                         <div class="summary-card unknown"><span id="count-unknown" class="count">0</span>Severidade Desconhecida</div>
                     </div>
-                    <canvas id="vulnerabilityChart"></canvas> <!-- Gráfico de vulnerabilidades -->
-
-                    <div id="detected-devices-summary" style="margin-top: 2rem;">
+                    <canvas id="vulnerabilityChart"></canvas> <div id="detected-devices-summary" style="margin-top: 2rem;">
                         <h3>Dispositivos Detectados</h3>
                         <div class="summary-grid">
                             <div class="summary-card"><span id="count-total-devices" class="count">0</span>Total de Dispositivos</div>
@@ -915,31 +908,24 @@
                     </div>
                 </div>
 
-                <!-- Conteúdo da Aba: Vulnerabilidades -->
                 <div id="vulnerabilities-tab" class="tab-content">
                     <h3>Detalhes das Vulnerabilidades</h3>
-                    <!-- NOVO: Navbar de IPs para filtragem -->
                     <div class="ip-navbar" id="vulnerabilities-ip-navbar">
-                        <!-- Botões de IP serão gerados aqui pelo JS -->
-                    </div>
+                        </div>
                     <div id="vulnerabilities-list">
-                        <!-- Conteúdo será gerado aqui pelo JS -->
-                    </div>
+                        </div>
                 </div>
 
-                <!-- Conteúdo da Aba: Mapa de Ativos -->
                 <div id="asset-map-tab" class="tab-content">
                     <h3>Mapa de Ativos</h3>
                     <p>Uma representação visual dos dispositivos detectados na rede. Passe o mouse sobre um círculo para ver detalhes.</p>
                     <svg id="asset-map-svg"></svg>
                 </div>
 
-                <!-- Conteúdo da Aba: Recomendações -->
                 <div id="recommendations-tab" class="tab-content">
                     <h3>Recomendações de Mitigação</h3>
                     <div id="recommendations-list">
-                        <!-- Conteúdo será gerado aqui pelo JS -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -1280,10 +1266,10 @@
             return;
         }
 
-        const top10Vulnerabilities = sortedVulnerabilities.slice(0, 10);
-        const remainingVulnerabilities = sortedVulnerabilities.slice(10);
+        const top15Vulnerabilities = sortedVulnerabilities.slice(0, 15);
+        const remainingVulnerabilities = sortedVulnerabilities.slice(15);
         
-        top10Vulnerabilities.forEach(vuln => {
+        top15Vulnerabilities.forEach(vuln => {
             const item = document.createElement('div');
             item.className = 'vulnerability-item';
             const displaySeverity = vuln.severity.charAt(0).toUpperCase() + vuln.severity.slice(1);
@@ -1311,7 +1297,6 @@
             remainingDiv.className = 'card';
             remainingDiv.style.marginTop = '1.5rem';
             
-            // CONTEÚDO CORRIGIDO: Gerando os badges de CVE de forma limpa e organizada
             let remainingCvesBadgesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 10px; max-height: 200px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: 4px;">';
             remainingVulnerabilities.forEach(vuln => {
                 remainingCvesBadgesHtml += `<span class="cve-badge ${vuln.severity}">${vuln.cve_id}</span>`;
@@ -1321,7 +1306,7 @@
             remainingDiv.innerHTML = `
                 <div class="card-header">
                     <h4 class="card-title">Outras Vulnerabilidades Detectadas (${remainingVulnerabilities.length})</h4>
-                    <p class="card-description">IDs das CVEs que não estão entre as top 10 mais relevantes.</p>
+                    <p class="card-description">IDs das CVEs que não estão entre as top 15 mais relevantes.</p>
                 </div>
                 ${remainingCvesBadgesHtml}
                 <button class="btn btn-secondary btn-sm view-all-other-cves-btn" style="margin-top: 1rem;" 
@@ -1331,7 +1316,6 @@
             `;
             listDiv.appendChild(remainingDiv);
 
-            // CORREÇÃO: Listener para o botão "Ver Todas as CVEs"
             document.querySelector('.view-all-other-cves-btn').addEventListener('click', function() {
                 const remaining = JSON.parse(this.dataset.remainingVulnerabilities);
                 let allCvesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; align-items: center; max-height: 50vh; overflow-y: auto;">';
@@ -1407,8 +1391,7 @@
         const links = [];
         if (nodes.length > 0) {
             if (nodes.length > 1) {
-                let centralNode = nodes[0]; // Padrão: primeiro nó como central
-                // CORREÇÃO: Encontrar o nó com mais CVEs para ser o central, se houver vulnerabilidades
+                let centralNode = nodes[0]; 
                 if (nodes.some(n => n.total_cves > 0)) { 
                     centralNode = nodes.reduce((maxNode, currentNode) => {
                         return (currentNode.total_cves > maxNode.total_cves) ? currentNode : maxNode;
@@ -1416,7 +1399,7 @@
                 }
                 
                 nodes.forEach(n => {
-                    if (n.id !== centralNode.id) { // Conecta todos os outros nós ao nó central
+                    if (n.id !== centralNode.id) {
                         links.push({ source: centralNode.id, target: n.id });
                     }
                 });
