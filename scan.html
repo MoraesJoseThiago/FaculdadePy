@@ -652,6 +652,39 @@
         .recommendation-item .btn {
             white-space: nowrap; /* Impede que o botão quebre linha */
         }
+
+        /* NOVO: Estilos para o Navbar de IPs */
+        .ip-navbar {
+            display: flex;
+            flex-wrap: wrap; /* Permite que os botões quebrem linha */
+            gap: 0.5rem; /* Espaçamento entre os botões */
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-300);
+        }
+
+        .ip-navbar .ip-button {
+            background-color: var(--gray-200);
+            color: var(--gray-700);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .ip-navbar .ip-button:hover {
+            background-color: var(--gray-300);
+            border-color: var(--gray-400);
+        }
+
+        .ip-navbar .ip-button.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
         
         /* Media Queries para responsividade */
         @media (max-width: 768px) {
@@ -885,6 +918,10 @@
                 <!-- Conteúdo da Aba: Vulnerabilidades -->
                 <div id="vulnerabilities-tab" class="tab-content">
                     <h3>Detalhes das Vulnerabilidades</h3>
+                    <!-- NOVO: Navbar de IPs para filtragem -->
+                    <div class="ip-navbar" id="vulnerabilities-ip-navbar">
+                        <!-- Botões de IP serão gerados aqui pelo JS -->
+                    </div>
                     <div id="vulnerabilities-list">
                         <!-- Conteúdo será gerado aqui pelo JS -->
                     </div>
@@ -912,7 +949,6 @@
     <script>
     let progressInterval;
     let currentProgress = 0;
-    // Mensagens de progresso mais detalhadas para o usuário
     const progressMessages = [
         "Iniciando varredura da rede...",
         "Realizando descoberta de hosts ativos...",
@@ -925,25 +961,27 @@
     let messageIndex = 0;
     let vulnerabilityChartInstance = null; // Para o gráfico de resumo
 
-    // Variável global para armazenar os resultados do scan, útil para re-renderizar mapa etc.
+    // Variável global para armazenar os resultados do scan completos (todos os hosts e suas vulnerabilidades)
     let globalScanResults = [];
+    // Variável global para armazenar APENAS as vulnerabilidades únicas para a aba de vulnerabilidades
+    let globalUniqueVulnerabilities = []; 
+    // Variável global para o IP atualmente filtrado na aba de vulnerabilidades
+    let currentVulnerabilityFilterIp = 'all';
 
     // --- Funções do Modal (para alertas e detalhes de CVE) ---
-    // showOkBtn: true para mostrar o botão "OK", false para apenas o "X" de fechar
     function showModal(title, message, detailsHtml = '', showOkBtn = false) {
         const modal = document.getElementById('custom-modal');
         document.getElementById('modal-title').textContent = title;
         document.getElementById('modal-message').textContent = message;
         document.getElementById('modal-details-content').innerHTML = detailsHtml;
         document.getElementById('modal-ok-btn').style.display = showOkBtn ? 'inline-block' : 'none';
-        modal.style.display = 'flex'; // Torna o modal visível
+        modal.style.display = 'flex';
     }
 
     function closeModal() {
-        document.getElementById('custom-modal').style.display = 'none'; // Esconde o modal
+        document.getElementById('custom-modal').style.display = 'none';
     }
 
-    // Event listeners para fechar o modal
     document.getElementById('modal-close-button').addEventListener('click', closeModal);
     document.getElementById('modal-ok-btn').addEventListener('click', closeModal);
 
@@ -954,23 +992,19 @@
         const progressMessage = document.getElementById('progress-message');
         const progressOverlay = document.getElementById('progress-overlay');
 
-        progressOverlay.style.display = 'flex'; // Mostra o overlay de progresso
+        progressOverlay.style.display = 'flex';
         currentProgress = 0;
         messageIndex = 0;
         progressBar.style.width = '0%';
         progressBar.textContent = '0%';
         progressMessage.textContent = progressMessages[messageIndex];
 
-        // CORREÇÃO: Aumentado o tempo total de animação para simular um processo mais longo.
-        // O tempo de 120000 ms (2 minutos) é um bom ponto de partida, mas pode ser ajustado.
-        const totalDuration = 180000; // Exemplo: 3 minutos (180 segundos) em milissegundos
-        const updateInterval = 1000; // Atualiza a cada 1 segundo
+        const totalDuration = 300000; // 5 minutos (300 segundos) para scans mais longos
+        const updateInterval = 1000;
 
-        // Inicia o intervalo que atualiza a barra de progresso
         progressInterval = setInterval(() => {
-            currentProgress += (updateInterval / totalDuration) * 100; // Incrementa a porcentagem
-            // Garante que a barra não vá além de 99% até a resposta real chegar
-            if (currentProgress >= 99) { // Chega a 99% e fica lá até o scan terminar
+            currentProgress += (updateInterval / totalDuration) * 100;
+            if (currentProgress >= 99) { 
                 currentProgress = 99; 
                 progressBar.textContent = `99%`;
             } else {
@@ -978,7 +1012,6 @@
             }
             progressBar.style.width = `${currentProgress}%`;
 
-            // Atualiza a mensagem de progresso com base no tempo/progresso
             const segmentDuration = totalDuration / progressMessages.length;
             const newIndex = Math.floor((currentProgress / 100) * progressMessages.length);
             if (newIndex < progressMessages.length && newIndex > messageIndex) {
@@ -990,13 +1023,12 @@
     }
 
     function stopProgressBarAnimation() {
-        clearInterval(progressInterval); // Limpa o intervalo para parar a animação
+        clearInterval(progressInterval);
         const progressBar = document.getElementById('progress-bar');
-        progressBar.style.width = '100%'; // Define para 100%
+        progressBar.style.width = '100%';
         progressBar.textContent = '100%';
-        document.getElementById('progress-message').textContent = 'Análise Concluída. Carregando dashboard...';
+        document.getElementById('progress-message').textContent = 'Análise Concluída. Preparando o dashboard!';
         
-        // Esconde o overlay após um pequeno atraso para o usuário ver o 100%
         setTimeout(() => {
             document.getElementById('progress-overlay').style.display = 'none';
         }, 800); 
@@ -1004,18 +1036,16 @@
 
     // --- Lógica Principal do Scan (integração com o backend) ---
     document.getElementById('scan-form').addEventListener('submit', async function(e) {
-        e.preventDefault(); // Previne o comportamento padrão do formulário (recarregar a página)
+        e.preventDefault();
 
-        // Coleta os valores do formulário
         const ip = document.getElementById('ip-address').value;
         const speed = document.querySelector('.scan-option.selected[data-speed]').dataset.speed;
         const portOption = document.querySelector('.scan-option.selected[data-ports]').dataset.ports;
         const osDetection = document.getElementById('os-detection').classList.contains('selected');
 
-        startProgressBarAnimation(); // Inicia a animação da barra de progresso
+        startProgressBarAnimation();
 
         try {
-            // Faz a requisição POST para o backend
             const res = await fetch('http://localhost:5000/scan', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -1027,30 +1057,29 @@
                 })
             });
 
-            const data = await res.json(); // Processa a resposta JSON do backend
-            stopProgressBarAnimation(); // Para a barra de progresso após a resposta
+            const data = await res.json();
+            stopProgressBarAnimation();
 
             if (data.results) {
-                globalScanResults = data.results; // Armazena os resultados para uso em outras abas
-                processAndDisplayResults(data.results); // Chama a função para exibir os resultados no dashboard
+                globalScanResults = data.results;
+                processAndDisplayResults(data.results);
             } else if (data.error) {
-                showModal('Erro na Análise', 'Erro: ' + data.error, '', true); // Exibe erro do backend
+                showModal('Erro na Análise', 'Erro: ' + data.error, '', true);
             } else if (data.message) {
-                showModal('Análise Concluída', data.message, '', true); // Exibe mensagens informativas (ex: nenhum host encontrado)
+                showModal('Análise Concluída', data.message, '', true);
             } else {
-                showModal('Erro Desconhecido', 'Nenhum resultado ou erro válido recebido da API.', '', true); // Caso de resposta inesperada
+                showModal('Erro Desconhecido', 'Nenhum resultado ou erro válido recebido da API.', '', true);
             }
 
         } catch (error) {
-            stopProgressBarAnimation(); // Garante que a barra pare em caso de erro de rede/conexão
+            stopProgressBarAnimation();
             showModal('Erro de Conexão', 'Erro ao realizar a análise. Verifique se o servidor está ativo e sua conexão. Detalhes: ' + error.message, '', true);
-            console.error(error); // Loga o erro no console do navegador para depuração
+            console.error(error);
         }
     });
 
     // --- Funções de Processamento e Exibição de Resultados nas Abas ---
 
-    // Função principal que orquestra a exibição dos resultados em todas as abas
     function processAndDisplayResults(results) {
         let allVulnerabilities = [];
         let deviceCounts = {
@@ -1062,7 +1091,6 @@
         };
 
         results.forEach(hostResult => {
-            // Lógica para categorizar o tipo de dispositivo (heurística simples)
             const osName = hostResult.os_details.name.toLowerCase();
             const osFamily = hostResult.os_details.family.toLowerCase();
             const isServer = hostResult.services.some(s => ['ssh', 'http', 'https', 'ftp', 'smtp', 'mysql', 'mssql', 'rdp'].includes(s.name));
@@ -1077,13 +1105,11 @@
                 deviceCounts.unknown++;
             }
             
-            // Coleta todas as vulnerabilidades de todos os serviços de todos os hosts
             hostResult.services.forEach(service => {
                 service.cves.forEach(cve => {
-                    // Cve aqui já vem com 'severity', 'cvss_score', 'summary', 'references' do backend
                     allVulnerabilities.push({
                         cve_id: cve.id,
-                        description: cve.summary, // Usar o summary do NVD
+                        description: cve.summary,
                         severity: cve.severity,
                         cvss_score: cve.cvss_score,
                         references: cve.references,
@@ -1091,47 +1117,40 @@
                         affected_service: `${service.name} (${service.product || ''} ${service.version || ''})`,
                         port: service.port,
                         protocol: service.protocol,
-                        host_details: hostResult // Passa os detalhes completos do host
+                        host_details: hostResult 
                     });
                 });
             });
         });
 
-        // NOVO: Desduplicar as vulnerabilidades antes de contar a severidade para o resumo
-        // A desduplicação agora é feita pelo ID da CVE e o IP afetado para garantir que a mesma CVE
-        // em diferentes serviços no mesmo host seja contada uma vez, e se afetar hosts diferentes
-        // seja contada separadamente (o que é o correto para o resumo de "vulnerabilidades" totais).
+        // Desduplica as vulnerabilidades para o resumo e para a lista principal
         const uniqueVulnerabilitiesByIdAndIP = {};
         allVulnerabilities.forEach(vuln => {
-            const key = `${vuln.cve_id}-${vuln.affected_ips.join(',')}`; // Chave única
+            const key = `${vuln.cve_id}-${vuln.affected_ips.join(',')}`;
             if (!uniqueVulnerabilitiesByIdAndIP[key]) {
                 uniqueVulnerabilitiesByIdAndIP[key] = vuln;
             } else {
-                // Se já existe, atualiza os IPs afetados se for o caso
                 uniqueVulnerabilitiesByIdAndIP[key].affected_ips = 
                     [...new Set([...uniqueVulnerabilitiesByIdAndIP[key].affected_ips, ...vuln.affected_ips])];
             }
         });
-        const finalUniqueVulnerabilities = Object.values(uniqueVulnerabilitiesByIdAndIP);
+        globalUniqueVulnerabilities = Object.values(uniqueVulnerabilitiesByIdAndIP); // Armazena globalmente
 
-
-        // Contar vulnerabilidades por severidade (agora usando dados REAIS e DESDUPLICADOS)
         let severityCounts = { critical: 0, high: 0, medium: 0, low: 0, unknown: 0 };
-        finalUniqueVulnerabilities.forEach(vuln => severityCounts[vuln.severity]++);
+        globalUniqueVulnerabilities.forEach(vuln => severityCounts[vuln.severity]++);
 
-        // Atualiza as abas com os dados processados
         updateSummaryTab(severityCounts, deviceCounts);
-        displayVulnerabilities(finalUniqueVulnerabilities); // Passa as vulnerabilidades desduplicadas para a lista
-        displayAssetMap(results); // Passa os resultados brutos para o mapa de ativos
-        displayRecommendations(finalUniqueVulnerabilities); // Passa as vulnerabilidades desduplicadas para as recomendações
+        // NOVO: Chama displayVulnerabilities com o filtro 'all' inicialmente
+        displayVulnerabilities(globalUniqueVulnerabilities, 'all'); 
+        displayAssetMap(results);
+        displayRecommendations(globalUniqueVulnerabilities); // Passa as vulnerabilidades desduplicadas
 
-        document.getElementById('results-card').style.display = 'block'; // Mostra o card de resultados
-        activateTab('summary-tab'); // Ativa a aba de resumo por padrão
+        document.getElementById('results-card').style.display = 'block';
+        activateTab('summary-tab');
     }
 
     // --- Resumo (Tab 1) ---
     function updateSummaryTab(severityCounts, deviceCounts) {
-        // Atualiza os contadores no grid de resumo
         document.getElementById('count-critical').textContent = severityCounts.critical;
         document.getElementById('count-high').textContent = severityCounts.high;
         document.getElementById('count-medium').textContent = severityCounts.medium;
@@ -1143,10 +1162,9 @@
         document.getElementById('count-workstations').textContent = deviceCounts.workstations;
         document.getElementById('count-iot').textContent = deviceCounts.iot;
 
-        // Gráfico de vulnerabilidades (Chart.js)
         const ctx = document.getElementById('vulnerabilityChart').getContext('2d');
         if (vulnerabilityChartInstance) {
-            vulnerabilityChartInstance.destroy(); // Destroi a instância anterior do gráfico
+            vulnerabilityChartInstance.destroy();
         }
 
         vulnerabilityChartInstance = new Chart(ctx, {
@@ -1186,53 +1204,99 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            callback: function(value) { if (value % 1 === 0) return value; } // Apenas números inteiros
+                            callback: function(value) { if (value % 1 === 0) return value; }
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        display: false // Não mostra a legenda, pois os labels já estão no eixo X
+                        display: false
                     }
                 }
             }
         });
     }
 
-    // Função auxiliar para converter variáveis CSS (ex: --primary) para formato RGB(A)
     function varToRgb(varName, alpha = 1) {
         const style = getComputedStyle(document.documentElement);
         const color = style.getPropertyValue(varName).trim();
-        // Converte de #RRGGBB para RGBA
         if (color.startsWith('#') && color.length === 7) {
             const r = parseInt(color.substring(1, 3), 16);
             const g = parseInt(color.substring(3, 5), 16);
             const b = parseInt(color.substring(5, 7), 16);
             return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
-        return color; // Retorna como está se não for um hex válido
+        return color;
     }
 
     // --- Vulnerabilidades Detalhadas (Tab 2) ---
-    function displayVulnerabilities(vulnerabilities) {
+    // NOVO: Adicionado currentFilterIp para filtrar a lista
+    function displayVulnerabilities(vulnerabilities, currentFilterIp = 'all') {
         const listDiv = document.getElementById('vulnerabilities-list');
-        listDiv.innerHTML = ''; // Limpa a lista antes de preencher
+        listDiv.innerHTML = ''; 
+
+        const ipNavbar = document.getElementById('vulnerabilities-ip-navbar');
+        ipNavbar.innerHTML = ''; // Limpa o navbar de IPs
 
         if (vulnerabilities.length === 0) {
             listDiv.innerHTML = '<p style="text-align: center; color: var(--gray-600);">Nenhuma vulnerabilidade detalhada detectada.</p>';
             return;
         }
 
-        // Ordena as vulnerabilidades pela severidade (Crítica > Alta > Média > Baixa > Desconhecida)
+        // 1. Criar o Navbar de IPs
+        const uniqueIps = new Set();
+        vulnerabilities.forEach(vuln => {
+            vuln.affected_ips.forEach(ip => uniqueIps.add(ip));
+        });
+        const sortedIps = Array.from(uniqueIps).sort((a, b) => {
+            // Ordena IPs numericamente para uma visualização melhor
+            const ipToNum = ip => ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+            return ipToNum(a) - ipToNum(b);
+        });
+
+        // Botão "Todos os IPs"
+        const allIpButton = document.createElement('button');
+        allIpButton.textContent = 'Todos os IPs';
+        allIpButton.className = `ip-button ${currentFilterIp === 'all' ? 'active' : ''}`;
+        allIpButton.addEventListener('click', () => {
+            currentVulnerabilityFilterIp = 'all';
+            displayVulnerabilities(globalUniqueVulnerabilities, 'all');
+        });
+        ipNavbar.appendChild(allIpButton);
+
+        // Botões para cada IP único
+        sortedIps.forEach(ip => {
+            const button = document.createElement('button');
+            button.textContent = ip;
+            button.className = `ip-button ${currentFilterIp === ip ? 'active' : ''}`;
+            button.addEventListener('click', () => {
+                currentVulnerabilityFilterIp = ip;
+                displayVulnerabilities(globalUniqueVulnerabilities, ip);
+            });
+            ipNavbar.appendChild(button);
+        });
+
+        // 2. Filtrar e exibir as vulnerabilidades
+        const filteredVulnerabilities = vulnerabilities.filter(vuln => {
+            return currentFilterIp === 'all' || vuln.affected_ips.includes(currentFilterIp);
+        });
+
         const severityOrder = { 'critical': 5, 'high': 4, 'medium': 3, 'low': 2, 'unknown': 1 };
-        // Vulnerabilidades já vêm desduplicadas do processAndDisplayResults
-        const sortedVulnerabilities = [...vulnerabilities].sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
+        const sortedVulnerabilities = [...filteredVulnerabilities].sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
 
+        if (sortedVulnerabilities.length === 0) {
+            listDiv.innerHTML = '<p style="text-align: center; color: var(--gray-600);">Nenhuma vulnerabilidade encontrada para o IP selecionado.</p>';
+            return;
+        }
 
-        sortedVulnerabilities.forEach(vuln => {
+        // Determine as Top 10 e o resto
+        const top10Vulnerabilities = sortedVulnerabilities.slice(0, 10);
+        const remainingVulnerabilities = sortedVulnerabilities.slice(10);
+        
+        // Exibe as Top 10 Vulnerabilidades com detalhes
+        top10Vulnerabilities.forEach(vuln => {
             const item = document.createElement('div');
             item.className = 'vulnerability-item';
-            // Converte a severidade para maiúscula na primeira letra para exibição
             const displaySeverity = vuln.severity.charAt(0).toUpperCase() + vuln.severity.slice(1);
             
             item.innerHTML = `
@@ -1253,10 +1317,31 @@
             listDiv.appendChild(item);
         });
 
-        // Adiciona event listeners para os botões "Ver Detalhes"
+        // Exibe o restante das vulnerabilidades em um formato mais compacto
+        if (remainingVulnerabilities.length > 0) {
+            const remainingDiv = document.createElement('div');
+            remainingDiv.className = 'card';
+            remainingDiv.style.marginTop = '1.5rem';
+            remainingDiv.innerHTML = `
+                <div class="card-header">
+                    <h4 class="card-title">Outras Vulnerabilidades Detectadas (${remainingVulnerabilities.length})</h4>
+                    <p class="card-description">IDs das CVEs que não estão entre as top 10 mais relevantes.</p>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    ${remainingVulnerabilities.map(vuln => 
+                        `<span class="cve-badge ${vuln.severity}">${vuln.cve_id}</span>`
+                    ).join('')}
+                </div>
+                <button class="btn btn-secondary btn-sm" style="margin-top: 1rem;" 
+                    onclick="showModal('Todas as Outras Vulnerabilidades', '', '<div style=\\"display: flex; flex-wrap: wrap; gap: 0.5rem;\\">${remainingVulnerabilities.map(v => `<span class=\\"cve-badge ${v.severity}\\">${v.cve_id}</span>`).join('')}</div>', false)">
+                    Ver Todas as CVEs
+                </button>
+            `;
+            listDiv.appendChild(remainingDiv);
+        }
+
         document.querySelectorAll('.view-details-btn').forEach(button => {
             button.addEventListener('click', function() {
-                // Pega os dados do dataset do botão
                 const cveId = this.dataset.cveId;
                 const summary = this.dataset.summary;
                 const cvss = this.dataset.cvss;
@@ -1271,8 +1356,7 @@
                         : '<p>Nenhuma referência disponível.</p>'
                     }
                 `;
-                // Exibe o modal com os detalhes da CVE
-                showModal('Detalhes da Vulnerabilidade', '', detailsHtml, false); // Não mostra o botão OK para este modal
+                showModal('Detalhes da Vulnerabilidade', '', detailsHtml, false);
             });
         });
     }
@@ -1280,18 +1364,17 @@
     // --- Mapa de Ativos (Tab 3) com D3.js ---
     function displayAssetMap(hostResults) {
         const svg = d3.select("#asset-map-svg");
-        svg.html(''); // Limpa SVG anterior
+        svg.html('');
         const width = svg.node().clientWidth;
         const height = svg.node().clientHeight;
 
         const simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(d => d.id).distance(150).strength(0.5)) // Distância maior, força do link
-            .force("charge", d3.forceManyBody().strength(-400)) // Força de repulsão maior
+            .force("link", d3.forceLink().id(d => d.id).distance(150).strength(0.5))
+            .force("charge", d3.forceManyBody().strength(-400))
             .force("center", d3.forceCenter(width / 2, height / 2));
 
-        // Mapeia os resultados dos hosts para o formato de nós do D3.js
         const nodes = hostResults.map((h, i) => {
-            let type = 'unknown'; // Tipo de dispositivo (para ícone/cor)
+            let type = 'unknown';
             const osName = h.os_details.name.toLowerCase();
             const isServer = h.services.some(s => ['ssh', 'http', 'https', 'ftp', 'smtp', 'mysql', 'mssql', 'rdp'].includes(s.name));
 
@@ -1299,7 +1382,6 @@
             else if (osName.includes('windows') || osName.includes('macos') || osName.includes('ubuntu') || osName.includes('debian')) { type = 'workstation'; }
             else if (osName.includes('embedded') || osName.includes('router') || osName.includes('wap') || osName.includes('camera') || osName.includes('printer')) { type = 'iot'; }
 
-            // CORREÇÃO: Calcular total_cves DESDUPLICADO para o tooltip
             const uniqueCvesForHost = new Set();
             h.services.forEach(svc => {
                 svc.cves.forEach(cve => {
@@ -1310,16 +1392,15 @@
             return {
                 id: h.ip,
                 name: h.ip,
-                hostname: h.hostname || 'N/A', // O hostname padrão para N/A
+                hostname: h.hostname || 'N/A',
                 status: h.status,
                 os: h.os_details.name,
                 type: type,
                 services: h.services,
-                total_cves: uniqueCvesForHost.size // Agora usa a contagem de CVEs únicas
+                total_cves: uniqueCvesForHost.size
             };
         });
 
-        // Conecta todos os nós a um nó central invisível para uma disposição mais "espalhada"
         const links = [];
         if (nodes.length > 1) {
             for (let i = 1; i < nodes.length; i++) {
@@ -1327,9 +1408,6 @@
             }
         }
         
-        // Se houver apenas 1 nó, não precisa de links e ele ficará no centro.
-
-        // Cria as linhas de conexão (links)
         const link = svg.append("g")
             .attr("class", "links")
             .selectAll("line")
@@ -1338,7 +1416,6 @@
             .attr("stroke", varToRgb('--gray-500', 0.6))
             .attr("stroke-width", 1.5);
 
-        // Cria os nós (círculos e texto)
         const node = svg.append("g")
             .attr("class", "nodes")
             .selectAll("g")
@@ -1351,9 +1428,8 @@
                 .on("end", dragended));
 
         node.append("circle")
-            .attr("r", d => 15 + d.total_cves * 2) // Raio baseado no número de CVEs (mais vulnerabilidades = maior)
-            .attr("fill", d => { // Cor baseada na severidade mais alta encontrada ou tipo
-                // Encontra a severidade mais alta para este host
+            .attr("r", d => 15 + d.total_cves * 2)
+            .attr("fill", d => {
                 let highestSeverity = 'low';
                 const severityOrder = { 'critical': 5, 'high': 4, 'medium': 3, 'low': 2, 'unknown': 1 };
                 d.services.forEach(svc => {
@@ -1364,7 +1440,7 @@
                     });
                 });
 
-                if (d.status === 'down') return '#ef4444'; // Vermelho se o host estiver offline
+                if (d.status === 'down') return '#ef4444';
                 
                 switch(highestSeverity) {
                     case 'critical': return varToRgb('--critical-color');
@@ -1375,14 +1451,12 @@
                 }
             })
             .on("mouseover", function(event, d) {
-                // Exibe tooltip ao passar o mouse
                 const tooltip = d3.select("body").append("div")
                     .attr("class", "tooltip")
                     .style("opacity", 0);
                 tooltip.transition()
                     .duration(200)
                     .style("opacity", .9);
-                // CORREÇÃO: Exibir o hostname do nó, ou uma mensagem alternativa se N/A
                 const displayHostname = d.hostname && d.hostname !== 'N/A' ? d.hostname : 'Hostname não detectado';
                 tooltip.html(`<strong>IP:</strong> ${d.id}<br/>
                               <strong>Hostname:</strong> ${displayHostname}<br/>
@@ -1393,11 +1467,9 @@
                     .style("top", (event.pageY - 28) + "px");
             })
             .on("mouseout", function(d) {
-                // Esconde tooltip ao tirar o mouse
                 d3.selectAll(".tooltip").remove();
             })
             .on("click", function(event, d) {
-                // Exibe modal de detalhes do ativo ao clicar
                 let servicesHtml = '<h4>Serviços:</h4><table class="results-table"><thead><tr><th>Porta</th><th>Serviço</th><th>Produto</th><th>Versão</th><th>CVEs</th></tr></thead><tbody>';
                 d.services.forEach(svc => {
                     let cvesBadges = svc.cves.map(c => `<span class="cve-badge ${c.severity}">${c.id}</span>`).join(' ');
@@ -1418,12 +1490,12 @@
 
 
         node.append("text")
-            .attr("dy", d => 15 + d.total_cves * 2 + 10) // Posição do texto abaixo do círculo
+            .attr("dy", d => 15 + d.total_cves * 2 + 10)
             .text(d => d.name);
 
         simulation
             .nodes(nodes)
-            .on("tick", ticked); // Chamada para atualizar posições
+            .on("tick", ticked);
 
         simulation.force("link")
             .links(links);
@@ -1455,20 +1527,12 @@
             d.fx = null;
             d.fy = null;
         }
-
-        // REMOVIDO: A seção assetListDiv e o listener para asset-details-btn
-        // Removido da aba "Mapa de Ativos", mas mantido o asset-list para ser preenchido,
-        // no entanto, não será exibido no DOM desta aba.
-
-        // CORREÇÃO: Removido o bloco completo da Lista de Ativos e seu preenchimento.
-        // A lista de ativos agora é exibida apenas no modal de detalhes do ativo quando clicado.
-
     }
 
     // --- Recomendações (Tab 4) ---
     function displayRecommendations(vulnerabilities) {
         const listDiv = document.getElementById('recommendations-list');
-        listDiv.innerHTML = ''; // Limpa a lista
+        listDiv.innerHTML = '';
 
         if (vulnerabilities.length === 0) {
             listDiv.innerHTML = '<p style="text-align: center; color: var(--gray-600);">Nenhuma recomendação disponível (nenhuma vulnerabilidade detectada).</p>';
@@ -1478,19 +1542,17 @@
         const uniqueRecommendationsMap = {};
 
         vulnerabilities.forEach(vuln => {
-            // CORREÇÃO: Tenta pegar o nome do serviço afetado para o título da recomendação
             let serviceName = 'Software Genérico';
             if (vuln.affected_service) {
-                // Regex para extrair apenas o nome principal do serviço (ex: "OpenSSH", "Apache httpd")
                 const match = vuln.affected_service.match(/^([^\s(]+)/);
                 if (match && match[1]) {
                     serviceName = match[1];
                 } else {
-                    serviceName = vuln.affected_service; // Fallback se regex não funcionar
+                    serviceName = vuln.affected_service;
                 }
             }
 
-            let recommendationTitle = `Recomendação para ${serviceName}: Atualizar Software`; // Título mais específico
+            let recommendationTitle = `Recomendação para ${serviceName}: Atualizar Software`;
             let recommendationDescription = 'Atualize o software afetado para a versão mais recente e aplique todos os patches de segurança.';
             let category = vuln.severity;
             
@@ -1575,6 +1637,10 @@
 
         if (tabId === 'asset-map-tab' && globalScanResults.length > 0) {
             setTimeout(() => displayAssetMap(globalScanResults), 50);
+        } else if (tabId === 'vulnerabilities-tab' && globalUniqueVulnerabilities.length > 0) {
+            // Se for a aba de vulnerabilidades, re-renderiza para garantir o navbar de IPs
+            // e o filtro correto sejam aplicados.
+            displayVulnerabilities(globalUniqueVulnerabilities, currentVulnerabilityFilterIp);
         }
     }
 
@@ -1606,7 +1672,8 @@
         document.getElementById('results-card').style.display = 'none';
 
         document.getElementById('vulnerabilities-list').innerHTML = ''; 
-        // REMOVIDO: Limpar a lista de ativos
+        // NOVO: Limpar o navbar de IPs no reset
+        document.getElementById('vulnerabilities-ip-navbar').innerHTML = '';
         document.getElementById('recommendations-list').innerHTML = '';
         document.getElementById('count-critical').textContent = '0';
         document.getElementById('count-high').textContent = '0';
