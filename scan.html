@@ -771,7 +771,6 @@
 
     <main class="main-content">
         <div class="container">
-            <!-- Analysis Form -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Configurar Análise</h2>
@@ -793,7 +792,7 @@
                                     <div class="scan-option-icon">F</div>
                                     <div class="scan-option-title">Scan Barulhento</div>
                                 </div>
-                                <p class="scan-option-description">Scan mais rápido (-T5), mas mais detectável. Ideal para redes internas.</p>
+                                <p class="scan-option-description">Scan mais rápido (-T5), mas mais detectável.</p>
                             </div>
 
                             <div class="scan-option" data-speed="T3">
@@ -801,7 +800,7 @@
                                     <div class="scan-option-icon">N</div>
                                     <div class="scan-option-title">Scan Normal</div>
                                 </div>
-                                <p class="scan-option-description">Velocidade balanceada (-T3). Bom equilíbrio entre velocidade e discrição.</p>
+                                <p class="scan-option-description">Velocidade balanceada (-T3).</p>
                             </div>
 
                             <div class="scan-option" data-speed="T1">
@@ -809,7 +808,7 @@
                                     <div class="scan-option-icon">L</div>
                                     <div class="scan-option-title">Scan Lento</div>
                                 </div>
-                                <p class="scan-option-description">Scan mais lento (-T1) e discreto. Ideal para redes monitoradas.</p>
+                                <p class="scan-option-description">Scan mais lento (-T1) e discreto.</p>
                             </div>
                         </div>
                     </div>
@@ -822,14 +821,14 @@
                                     <div class="scan-option-icon">20</div>
                                     <div class="scan-option-title">20 Portas</div>
                                 </div>
-                                <p class="scan-option-description">Scan nas 20 portas mais comuns (--top-ports 20). Muito rápido.</p>
+                                <p class="scan-option-description">Scan nas 20 portas mais comuns.</p>
                             </div>
                             <div class="scan-option selected" data-ports="top_100">
                                 <div class="scan-option-header">
                                     <div class="scan-option-icon">100</div>
                                     <div class="scan-option-title">100 Portas</div>
                                 </div>
-                                <p class="scan-option-description">Scan nas 100 portas mais comuns (--top-ports 100). Mais rápido.</p>
+                                <p class="scan-option-description">Scan nas 100 portas mais comuns.</p>
                             </div>
 
                             <div class="scan-option" data-ports="top_1000">
@@ -837,7 +836,7 @@
                                     <div class="scan-option-icon">1K</div>
                                     <div class="scan-option-title">1000 Portas</div>
                                 </div>
-                                <p class="scan-option-description">Scan nas 1000 portas mais comuns (--top-ports 1000). Balanceado.</p>
+                                <p class="scan-option-description">Scan nas 1000 portas mais comuns.</p>
                             </div>
 
                             <div class="scan-option" data-ports="all_ports">
@@ -845,7 +844,7 @@
                                     <div class="scan-option-icon">A</div>
                                     <div class="scan-option-title">Todas as Portas</div>
                                 </div>
-                                <p class="scan-option-description">Scan em todas as portas (-p-). Mais completo porém mais lento.</p>
+                                <p class="scan-option-description">Scan em todas as portas.</p>
                             </div>
                         </div>
                     </div>
@@ -858,7 +857,7 @@
                                     <div class="scan-option-icon">OS</div>
                                     <div class="scan-option-title">Detecção de OS</div>
                                 </div>
-                                <p class="scan-option-description">Tentar detectar sistema operacional (-O). Aumenta tempo de scan.</p>
+                                <p class="scan-option-description">Tentar detectar sistema operacional.</p>
                             </div>
                         </div>
                     </div>
@@ -890,6 +889,8 @@
 
                 <div id="summary-tab" class="tab-content active">
                     <h3>Visão Geral das Vulnerabilidades</h3>
+                    <div class="ip-navbar" id="summary-ip-navbar">
+                        </div>
                     <div class="summary-grid">
                         <div class="summary-card critical"><span id="count-critical" class="count">0</span>Vulnerabilidades Críticas</div>
                         <div class="summary-card high"><span id="count-high" class="count">0</span>Vulnerabilidades Altas</div>
@@ -924,6 +925,8 @@
 
                 <div id="recommendations-tab" class="tab-content">
                     <h3>Recomendações de Mitigação</h3>
+                    <div class="ip-navbar" id="recommendations-ip-navbar">
+                        </div>
                     <div id="recommendations-list">
                         </div>
                 </div>
@@ -949,19 +952,22 @@
     let globalScanResults = [];
     let globalUniqueVulnerabilities = []; 
     let currentVulnerabilityFilterIp = 'all';
+    let currentSummaryFilterIp = 'all'; 
+    let currentRecommendationsFilterIp = 'all'; // NOVO: Estado para o filtro de IP nas recomendações
 
     // --- Funções do Modal (para alertas e detalhes de CVE) ---
     function showModal(title, message, detailsHtml = '', showOkBtn = false) {
         const modal = document.getElementById('custom-modal');
         document.getElementById('modal-title').textContent = title;
         document.getElementById('modal-message').textContent = message;
-        document.getElementById('modal-details-content').innerHTML = detailsHtml;
+        document.getElementById('modal-details-content').innerHTML = detailsHtml; 
         document.getElementById('modal-ok-btn').style.display = showOkBtn ? 'inline-block' : 'none';
         modal.style.display = 'flex';
     }
 
     function closeModal() {
         document.getElementById('custom-modal').style.display = 'none';
+        document.getElementById('modal-details-content').innerHTML = ''; 
     }
 
     document.getElementById('modal-close-button').addEventListener('click', closeModal);
@@ -1121,22 +1127,61 @@
         let severityCounts = { critical: 0, high: 0, medium: 0, low: 0, unknown: 0 };
         globalUniqueVulnerabilities.forEach(vuln => severityCounts[vuln.severity]++);
 
-        updateSummaryTab(severityCounts, deviceCounts);
+        updateSummaryTab(globalUniqueVulnerabilities, deviceCounts, 'all'); 
         displayVulnerabilities(globalUniqueVulnerabilities, 'all'); 
         displayAssetMap(results);
-        displayRecommendations(globalUniqueVulnerabilities);
+        displayRecommendations(globalUniqueVulnerabilities, 'all'); // Chama com 'all' inicialmente
 
         document.getElementById('results-card').style.display = 'block';
         activateTab('summary-tab');
     }
 
     // --- Summary Tab (Tab 1) ---
-    function updateSummaryTab(severityCounts, deviceCounts) {
+    function updateSummaryTab(allVulnerabilities, deviceCounts, filterIp = 'all') {
+        const summaryIpNavbar = document.getElementById('summary-ip-navbar');
+        summaryIpNavbar.innerHTML = ''; 
+
+        const uniqueIps = new Set();
+        allVulnerabilities.forEach(vuln => {
+            vuln.affected_ips.forEach(ip => uniqueIps.add(ip));
+        });
+        const sortedIps = Array.from(uniqueIps).sort((a, b) => {
+            const ipToNum = ip => ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+            return ipToNum(a) - ipToNum(b);
+        });
+
+        const allIpButton = document.createElement('button');
+        allIpButton.textContent = 'Todos os IPs';
+        allIpButton.className = `ip-button ${filterIp === 'all' ? 'active' : ''}`;
+        allIpButton.addEventListener('click', () => {
+            currentSummaryFilterIp = 'all'; 
+            updateSummaryTab(globalUniqueVulnerabilities, deviceCounts, 'all');
+        });
+        summaryIpNavbar.appendChild(allIpButton);
+
+        sortedIps.forEach(ip => {
+            const button = document.createElement('button');
+            button.textContent = ip;
+            button.className = `ip-button ${filterIp === ip ? 'active' : ''}`;
+            button.addEventListener('click', () => {
+                currentSummaryFilterIp = ip; 
+                updateSummaryTab(globalUniqueVulnerabilities, deviceCounts, ip);
+            });
+            summaryIpNavbar.appendChild(button);
+        });
+
+        const filteredVulnerabilities = allVulnerabilities.filter(vuln => {
+            return filterIp === 'all' || vuln.affected_ips.includes(filterIp);
+        });
+
+        let severityCounts = { critical: 0, high: 0, medium: 0, low: 0, unknown: 0 };
+        filteredVulnerabilities.forEach(vuln => severityCounts[vuln.severity]++);
+
         document.getElementById('count-critical').textContent = severityCounts.critical;
         document.getElementById('count-high').textContent = severityCounts.high;
         document.getElementById('count-medium').textContent = severityCounts.medium;
         document.getElementById('count-low').textContent = severityCounts.low;
-        document.getElementById('count-unknown').textContent = severityCounts.unknown;
+        document.getElementById('count-unknown').textContent = 0; 
 
         document.getElementById('count-total-devices').textContent = deviceCounts.total;
         document.getElementById('count-servers').textContent = deviceCounts.servers;
@@ -1151,29 +1196,26 @@
         vulnerabilityChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Crítica', 'Alta', 'Média', 'Baixa', 'Desconhecida'],
+                labels: ['Crítica', 'Alta', 'Média', 'Baixa'], 
                 datasets: [{
                     label: 'Número de Vulnerabilidades',
                     data: [
                         severityCounts.critical,
                         severityCounts.high,
                         severityCounts.medium,
-                        severityCounts.low,
-                        severityCounts.unknown
+                        severityCounts.low
                     ],
                     backgroundColor: [
                         varToRgb('--critical-color', 0.8),
                         varToRgb('--high-color', 0.8),
                         varToRgb('--medium-color', 0.8),
-                        varToRgb('--low-color', 0.8),
-                        varToRgb('--unknown-color', 0.8)
+                        varToRgb('--low-color', 0.8)
                     ],
                     borderColor: [
                         varToRgb('--critical-color', 1),
                         varToRgb('--high-color', 1),
                         varToRgb('--medium-color', 1),
-                        varToRgb('--low-color', 1),
-                        varToRgb('--unknown-color', 1)
+                        varToRgb('--low-color', 1)
                     ],
                     borderWidth: 1
                 }]
@@ -1266,10 +1308,7 @@
             return;
         }
 
-        const top15Vulnerabilities = sortedVulnerabilities.slice(0, 15);
-        const remainingVulnerabilities = sortedVulnerabilities.slice(15);
-        
-        top15Vulnerabilities.forEach(vuln => {
+        sortedVulnerabilities.forEach(vuln => {
             const item = document.createElement('div');
             item.className = 'vulnerability-item';
             const displaySeverity = vuln.severity.charAt(0).toUpperCase() + vuln.severity.slice(1);
@@ -1291,41 +1330,6 @@
             `;
             listDiv.appendChild(item);
         });
-
-        if (remainingVulnerabilities.length > 0) {
-            const remainingDiv = document.createElement('div');
-            remainingDiv.className = 'card';
-            remainingDiv.style.marginTop = '1.5rem';
-            
-            let remainingCvesBadgesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 10px; max-height: 200px; overflow-y: auto; border: 1px solid var(--gray-200); border-radius: 4px;">';
-            remainingVulnerabilities.forEach(vuln => {
-                remainingCvesBadgesHtml += `<span class="cve-badge ${vuln.severity}">${vuln.cve_id}</span>`;
-            });
-            remainingCvesBadgesHtml += '</div>';
-
-            remainingDiv.innerHTML = `
-                <div class="card-header">
-                    <h4 class="card-title">Outras Vulnerabilidades Detectadas (${remainingVulnerabilities.length})</h4>
-                    <p class="card-description">IDs das CVEs que não estão entre as top 15 mais relevantes.</p>
-                </div>
-                ${remainingCvesBadgesHtml}
-                <button class="btn btn-secondary btn-sm view-all-other-cves-btn" style="margin-top: 1rem;" 
-                        data-remaining-vulnerabilities='${JSON.stringify(remainingVulnerabilities)}'>
-                    Ver Todas as CVEs
-                </button>
-            `;
-            listDiv.appendChild(remainingDiv);
-
-            document.querySelector('.view-all-other-cves-btn').addEventListener('click', function() {
-                const remaining = JSON.parse(this.dataset.remainingVulnerabilities);
-                let allCvesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; align-items: center; max-height: 50vh; overflow-y: auto;">';
-                remaining.forEach(v => {
-                    allCvesHtml += `<span class="cve-badge ${v.severity}">${v.cve_id}</span>`;
-                });
-                allCvesHtml += '</div>';
-                showModal('Todas as Outras Vulnerabilidades', 'Aqui estão todos os IDs das CVEs restantes.', allCvesHtml, false);
-            });
-        }
 
         document.querySelectorAll('.view-details-btn').forEach(button => {
             button.addEventListener('click', function() {
@@ -1532,14 +1536,59 @@
         const listDiv = document.getElementById('recommendations-list');
         listDiv.innerHTML = '';
 
+        const ipNavbar = document.getElementById('recommendations-ip-navbar'); // NOVO: Elemento para o navbar de IP
+        ipNavbar.innerHTML = ''; // Limpa o navbar
+
         if (vulnerabilities.length === 0) {
             listDiv.innerHTML = '<p style="text-align: center; color: var(--gray-600);">Nenhuma recomendação disponível (nenhuma vulnerabilidade detectada).</p>';
             return;
         }
 
+        // 1. Criar o Navbar de IPs para Recomendações
+        const uniqueIps = new Set();
+        vulnerabilities.forEach(vuln => {
+            vuln.affected_ips.forEach(ip => uniqueIps.add(ip));
+        });
+        const sortedIps = Array.from(uniqueIps).sort((a, b) => {
+            const ipToNum = ip => ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0);
+            return ipToNum(a) - ipToNum(b);
+        });
+
+        // Botão "Todos os IPs"
+        const allIpButton = document.createElement('button');
+        allIpButton.textContent = 'Todos os IPs';
+        allIpButton.className = `ip-button ${currentRecommendationsFilterIp === 'all' ? 'active' : ''}`;
+        allIpButton.addEventListener('click', () => {
+            currentRecommendationsFilterIp = 'all'; // Atualiza o estado do filtro
+            displayRecommendations(globalUniqueVulnerabilities); // Re-renderiza com todas as recomendações
+        });
+        ipNavbar.appendChild(allIpButton);
+
+        // Botões para cada IP único
+        sortedIps.forEach(ip => {
+            const button = document.createElement('button');
+            button.textContent = ip;
+            button.className = `ip-button ${currentRecommendationsFilterIp === ip ? 'active' : ''}`;
+            button.addEventListener('click', () => {
+                currentRecommendationsFilterIp = ip; // Atualiza o estado do filtro
+                displayRecommendations(globalUniqueVulnerabilities); // Re-renderiza com o filtro de IP
+            });
+            ipNavbar.appendChild(button);
+        });
+
+        // 2. Filtrar recomendações com base no IP selecionado
+        const filteredVulnerabilities = vulnerabilities.filter(vuln => {
+            return currentRecommendationsFilterIp === 'all' || vuln.affected_ips.includes(currentRecommendationsFilterIp);
+        });
+
+        if (filteredVulnerabilities.length === 0) {
+            listDiv.innerHTML = '<p style="text-align: center; color: var(--gray-600);">Nenhuma recomendação encontrada para o IP selecionado.</p>';
+            return;
+        }
+
         const uniqueRecommendationsMap = {};
 
-        vulnerabilities.forEach(vuln => {
+        filteredVulnerabilities.forEach(vuln => { // Usar filteredVulnerabilities
             let serviceName = 'Software Genérico';
             if (vuln.affected_service) {
                 const match = vuln.affected_service.match(/^([^\s(]+)/);
@@ -1560,7 +1609,7 @@
                 category = 'critical';
             } else if (vuln.affected_service.includes('OpenSSH')) {
                 recommendationTitle = 'Atualizar OpenSSH e Fortalecer Configurações';
-                recommendationDescription = 'Atualize o OpenSSH para a versão mais recente e desative métodos de autenticação fracos. Use autenticação baseada em chave SSH, desative login de root direto, limite tentativas de login e configure firewalls para permitir acesso apenas de IPs confiáveis.';
+                recommendationDescription = 'Atualize o OpenSSH para a versão mais recente e desactive métodos de autenticação fracos. Use autenticação baseada em chave SSH, desative login de root direto, limite tentativas de login e configure firewalls para permitir acesso apenas de IPs confiáveis.';
                 category = 'high';
             } else if (vuln.affected_service.includes('Apache httpd')) {
                 recommendationTitle = 'Manter Apache HTTPd Atualizado e Seguro';
@@ -1635,6 +1684,8 @@
             setTimeout(() => displayAssetMap(globalScanResults), 50);
         } else if (tabId === 'vulnerabilities-tab' && globalUniqueVulnerabilities.length > 0) {
             displayVulnerabilities(globalUniqueVulnerabilities, currentVulnerabilityFilterIp);
+        } else if (tabId === 'recommendations-tab' && globalUniqueVulnerabilities.length > 0) { // NOVO: Ativação para recomendações
+            displayRecommendations(globalUniqueVulnerabilities); // Chama com o filtro atual, que é 'all' no início
         }
     }
 
@@ -1668,6 +1719,7 @@
         document.getElementById('vulnerabilities-list').innerHTML = ''; 
         document.getElementById('vulnerabilities-ip-navbar').innerHTML = '';
         document.getElementById('recommendations-list').innerHTML = '';
+        document.getElementById('recommendations-ip-navbar').innerHTML = ''; // NOVO: Limpa a navbar de recomendações
         document.getElementById('count-critical').textContent = '0';
         document.getElementById('count-high').textContent = '0';
         document.getElementById('count-medium').textContent = '0';

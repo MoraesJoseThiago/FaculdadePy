@@ -6,6 +6,8 @@ import re
 import shutil
 import requests
 import time
+import json 
+import os   
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -13,15 +15,45 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 app = Flask(__name__)
 CORS(app)
 
+# Caminho para o arquivo de cache de CVEs
+CVE_CACHE_FILE = 'cve_cache.json'
 # Cache em memória para os detalhes das CVEs do NVD
 cve_details_cache = {}
-# Tempo de espera inicial entre as requisições ao NVD (em segundos)
-NVD_API_DELAY = 5.0 # Atraso de 5 segundos para ser BEM conservador (1 requisição a cada 5s)
-MAX_NVD_RETRIES = 3 # Número máximo de tentativas de consulta ao NVD para uma única CVE
 
-# Limite de CVEs (qualquer severidade) para as quais buscar detalhes no NVD por scan.
-# Isso evita o erro 429 para scans com muitas CVEs.
-MAX_NVD_DETAILS_FETCHED_PER_SCAN = 15 # Buscar detalhes para as primeiras 15 CVEs.
+# Tempo de espera inicial entre as requisições ao NVD (em segundos)
+NVD_API_DELAY = 5.0 # Atraso de 5 segundos (inicial) para ser BEM MAIS conservador
+MAX_NVD_RETRIES = 10 # AUMENTADO para 10 tentativas de consulta ao NVD para uma única CVE
+
+# NOTA: MAX_NVD_DETAILS_FETCHED_PER_SCAN foi REMOVIDO.
+# O objetivo agora é tentar buscar os detalhes para TODAS as CVEs.
+
+def load_cve_cache():
+    """Carrega o cache de CVEs de um arquivo JSON."""
+    global cve_details_cache
+    if os.path.exists(CVE_CACHE_FILE):
+        try:
+            with open(CVE_CACHE_FILE, 'r') as f:
+                cve_details_cache = json.load(f)
+            logging.info(f"Cache de CVEs carregado de {CVE_CACHE_FILE}. Total de {len(cve_details_cache)} CVEs em cache.")
+        except json.JSONDecodeError as e:
+            logging.error(f"Erro ao decodificar JSON do arquivo de cache {CVE_CACHE_FILE}: {e}. O cache será iniciado vazio.")
+            cve_details_cache = {}
+        except Exception as e:
+            logging.error(f"Erro ao carregar o cache de CVEs de {CVE_CACHE_FILE}: {e}. O cache será iniciado vazio.")
+            cve_details_cache = {}
+    else:
+        logging.info(f"Arquivo de cache {CVE_CACHE_FILE} não encontrado. Iniciando cache vazio.")
+        cve_details_cache = {}
+
+def save_cve_cache():
+    """Salva o cache de CVEs em um arquivo JSON."""
+    try:
+        with open(CVE_CACHE_FILE, 'w') as f:
+            json.dump(cve_details_cache, f, indent=4) # indent=4 para formatar o JSON legível
+        logging.info(f"Cache de CVEs salvo em {CVE_CACHE_FILE}. Total de {len(cve_details_cache)} CVEs em cache.")
+    except Exception as e:
+        logging.error(f"Erro ao salvar o cache de CVEs em {CVE_CACHE_FILE}: {e}.")
+
 
 def is_nmap_installed():
     """Verifica se o executável do Nmap está disponível no PATH do sistema."""
@@ -43,24 +75,26 @@ def get_cve_severity_from_nvd(cve_id):
 
     nvd_api_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={cve_id}"
     
+    # MODIFICADO: Default para 'medium' em vez de 'unknown'
+    # Esta será a severidade se TODAS as tentativas falharem.
     default_cve_details = {
-        "severity": "unknown",
+        "severity": "medium", 
         "cvss_score": None,
-        "summary": "Detalhes não puderam ser obtidos do NVD ou consulta ignorada por limite.",
+        "summary": "Detalhes não puderam ser obtidos do NVD ou consulta ignorada após múltiplas tentativas.",
         "references": []
     }
 
     retries = 0
-    while retries <= MAX_NVD_RETRIES:
+    while retries < MAX_NVD_RETRIES: # Loop continua enquanto retries for menor que MAX_NVD_RETRIES
         try:
-            # APLICAR DELAY ANTES DE CADA REQUISIÇÃO AO NVD
             current_delay = NVD_API_DELAY * (2 ** retries) # Atraso exponencial
             if retries > 0:
                 logging.info(f"Tentando novamente consulta NVD para {cve_id} (tentativa {retries+1}/{MAX_NVD_RETRIES}), atraso: {current_delay:.2f}s")
-            time.sleep(current_delay)
+            
+            time.sleep(current_delay) # Aguarda o delay antes da requisição
 
-            response = requests.get(nvd_api_url, timeout=10)
-            response.raise_for_status()
+            response = requests.get(nvd_api_url, timeout=15) # Aumentei o timeout para 15s
+            response.raise_for_status() # Levanta um erro para status de erro HTTP (4xx ou 5xx)
             data = response.json()
 
             if data and data.get('vulnerabilities'):
@@ -93,7 +127,7 @@ def get_cve_severity_from_nvd(cve_id):
                 else:
                     severity_category = "low"
             else:
-                severity_category = "unknown"
+                severity_category = "medium" # Padroniza para 'medium' se o CVSS não for encontrado no NVD
 
             result = {
                 "severity": severity_category,
@@ -101,8 +135,8 @@ def get_cve_severity_from_nvd(cve_id):
                 "summary": description,
                 "references": [ref['url'] for ref in vuln_data.get('references', []) if 'url' in ref]
             }
-            cve_details_cache[cve_id] = result
-            return result, True # Detalhes obtidos do NVD agora
+            cve_details_cache[cve_id] = result 
+            return result, True # Detalhes obtidos do NVD agora (requisição bem-sucedida)
 
         except requests.exceptions.Timeout:
             logging.error(f"Timeout ao consultar NVD para {cve_id} (tentativa {retries+1}/{MAX_NVD_RETRIES}).")
@@ -119,8 +153,8 @@ def get_cve_severity_from_nvd(cve_id):
         
         retries += 1
     
-    logging.error(f"Todas as {MAX_NVD_RETRIES} tentativas de consulta ao NVD para {cve_id} falharam. Retornando detalhes padrão.")
-    cve_details_cache[cve_id] = default_cve_details # Cacheia o default para não tentar de novo
+    logging.error(f"Todas as {MAX_NVD_RETRIES} tentativas de consulta ao NVD para {cve_id} falharam. Retornando detalhes padrão (Média).")
+    cve_details_cache[cve_id] = default_cve_details # Cacheia o default para não tentar de novo na próxima vez
     return default_cve_details, False # Não foi buscado agora, falhou
 
 def run_scan(target, speed, port_option, os_detection):
@@ -169,8 +203,8 @@ def run_scan(target, speed, port_option, os_detection):
         logging.info(f"Nenhum host encontrado para o target: {target}")
         return results
 
-    # Contador para detalhes de CVEs obtidos do NVD nesta execução do scan
-    nvd_details_fetched_count = 0 
+    # NOVO: Não há mais limite de detalhes aqui. Todos serão buscados/cacheaddos.
+    # nvd_details_fetched_count = 0 
 
     for host in nm.all_hosts():
         services = []
@@ -201,26 +235,10 @@ def run_scan(target, speed, port_option, os_detection):
 
                 detailed_cves = []
                 for cve_id in unique_cve_ids_for_service:
-                    cve_details = None
-                    fetched_now = False # Flag para saber se a consulta ao NVD foi feita agora
-
-                    # NOVO: Se o limite de detalhes de CVEs foi atingido, não faz a requisição ao NVD
-                    if nvd_details_fetched_count >= MAX_NVD_DETAILS_FETCHED_PER_SCAN:
-                        logging.warning(f"Limite total de detalhes de CVEs ({MAX_NVD_DETAILS_FETCHED_PER_SCAN}) atingido para este scan. Detalhes para {cve_id} e subsequentes não serão consultados do NVD.")
-                        cve_details = {
-                            "id": cve_id,
-                            "severity": "unknown",
-                            "cvss_score": None,
-                            "summary": "Detalhes não consultados devido ao limite de requisições ao NVD para este scan.",
-                            "references": []
-                        }
-                        fetched_now = False # Não foi buscado agora, foi ignorado
-                    else:
-                        cve_details, fetched_now = get_cve_severity_from_nvd(cve_id) # Chama a função para obter detalhes
-
-                    # Se a consulta ao NVD foi bem-sucedida e não veio do cache, incrementa o contador
-                    if fetched_now: # Este é o ponto crucial para o controle preciso
-                        nvd_details_fetched_count += 1
+                    # Chamar get_cve_severity_from_nvd que agora tem mais retentativas e padroniza para 'medium' em caso de falha
+                    cve_details, _ = get_cve_severity_from_nvd(cve_id) 
+                    # A lógica de nvd_details_fetched_count e MAX_NVD_DETAILS_FETCHED_PER_SCAN foi removida daqui,
+                    # pois o objetivo é que get_cve_severity_from_nvd seja persistente o suficiente para a maioria dos casos.
 
                     detailed_cves.append({
                         "id": cve_id,
@@ -229,10 +247,8 @@ def run_scan(target, speed, port_option, os_detection):
                         "summary": cve_details["summary"],
                         "references": cve_details["references"]
                     })
-                    if cve_details["severity"] != "unknown" and cve_details["summary"] != "Detalhes não puderam ser obtidos do NVD ou consulta ignorada por limite.": 
-                        logging.info(f"CVE {cve_id} (Sev: {cve_details['severity']}, CVSS: {cve_details['cvss_score']}) encontrada para {host}:{port}")
-                    else:
-                        logging.warning(f"Detalhes da CVE {cve_id} não obtidos para {host}:{port} ou consulta ignorada.")
+                    # O log agora reflete a severidade real ou a padronizada para 'medium'
+                    logging.info(f"CVE {cve_id} (Sev: {cve_details['severity']}, CVSS: {cve_details['cvss_score']}) encontrada para {host}:{port}")
 
                 services.append({
                     "port": port, "protocol": proto, "name": service.get('name', 'unknown'),
@@ -249,6 +265,7 @@ def run_scan(target, speed, port_option, os_detection):
             "os_details": os_details, "status": host_status, "services": services
         })
 
+    save_cve_cache() 
     return results
 
 # ---
@@ -287,6 +304,7 @@ def scan():
         return jsonify({"error": f"Erro interno do servidor ao realizar a análise. Detalhes: {e}"}), 500
 
 if __name__ == '__main__':
+    load_cve_cache()
     if not is_nmap_installed():
         logging.error("ATENÇÃO: Nmap não está instalado ou não está no PATH do sistema. A funcionalidade de scan não funcionará.")
     else:
